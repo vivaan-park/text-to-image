@@ -14,3 +14,12 @@ def load_filenames(data_dir, split):
     else:
         filenames = []
     return filenames
+
+def tokenizer(cap):
+    tokens = []
+    for word in cap:
+        for morphs in word.morphs:
+            w, m = str(morphs).split('/')
+            if m not in ('SF', 'SP', 'SS', 'SE', 'SO', 'SW'):
+                tokens.append(w)
+    return tokens
