@@ -23,3 +23,27 @@ def tokenizer(cap):
             if m not in ('SF', 'SP', 'SS', 'SE', 'SO', 'SW'):
                 tokens.append(w)
     return tokens
+
+def load_captions(filenames):
+    all_captions = []
+    for i in range(len(filenames)):
+        cap_path = f'texts/{filenames[i]}.txt'
+        with open(cap_path, 'r') as f:
+            captions = f.read().split('\n')
+            cnt = 0
+            for cap in captions:
+                if not len(cap):
+                    continue
+
+                morphs = API.analyze(cap.lower())
+                tokens = tokenizer(morphs)
+                if not len(tokens):
+                    continue
+
+                all_captions.append(tokens)
+                cnt += 1
+                if cnt == CAPTIONS_PER_IMAGE:
+                    break
+            if cnt < CAPTIONS_PER_IMAGE:
+                print(f'ERROR: the captions for {filenames[i]} less than {cnt}')
+    return all_captions
