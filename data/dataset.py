@@ -92,3 +92,18 @@ def build_dictionary(train_captions, test_captions):
 
     return [train_captions_new, test_captions_new,
             idxtoword, wordtoidx, len(idxtoword)]
+
+def generate_captions(data_dir):
+    filepath = os.path.join(data_dir, 'captions.pickle')
+    train_names = load_filenames(data_dir, 'train')
+    test_names = load_filenames(data_dir, 'test')
+    if not os.path.isfile(filepath):
+        train_captions = load_captions(train_names)
+        test_captions = load_captions(test_names)
+
+        train_captions, test_captions, idxtoword, wordtoidx, n_words = \
+            build_dictionary(train_captions, test_captions)
+        with open(filepath, 'wb') as f:
+            pickle.dump([train_captions, test_captions,
+                         idxtoword, wordtoidx], f)
+            print('Save to:', filepath)
