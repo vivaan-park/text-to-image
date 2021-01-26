@@ -4,6 +4,13 @@
 
 import os
 import pickle
+from collections import defaultdict
+
+from khaiii import KhaiiiApi
+
+API = KhaiiiApi()
+
+CAPTIONS_PER_IMAGE = 10
 
 def load_filenames(data_dir, split):
     filepath = f'{data_dir}/filenames_{split}.pickle'
@@ -47,3 +54,41 @@ def load_captions(filenames):
             if cnt < CAPTIONS_PER_IMAGE:
                 print(f'ERROR: the captions for {filenames[i]} less than {cnt}')
     return all_captions
+
+def build_dictionary(train_captions, test_captions):
+    word_counts = defaultdict(float)
+    captions = train_captions + test_captions
+    for cap in captions:
+        for word in cap:
+            word_counts[word] += 1
+
+    vocab = [w for w in word_counts if word_counts[w] >= 0]
+
+    idxtoword = {}
+    idxtoword[0] = '<끝>'
+    wordtoidx = {}
+    wordtoidx['<끝>'] = 0
+    idx = 1
+    for word in vocab:
+        wordtoidx[word] = idx
+        idxtoword[idx] = word
+        idx += 1
+
+    train_captions_new = []
+    for cap in train_captions:
+        rev = []
+        for word in cap:
+            if word in wordtoidx:
+                rev.append(wordtoidx[word])
+        train_captions_new.append(rev)
+
+    test_captions_new = []
+    for cap in test_captions:
+        rev = []
+        for word in cap:
+            if word in wordtoidx:
+                rev.append(wordtoidx[word])
+        test_captions_new.append(rev)
+
+    return [train_captions_new, test_captions_new,
+            idxtoword, wordtoidx, len(idxtoword)]
