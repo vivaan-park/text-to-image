@@ -30,3 +30,8 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
         )
 
         super(SpectralNormalization, self).build()
+
+    def call(self, inputs, training=None, mask=None):
+        self.update_weights()
+        output = self.layer(inputs)
+        return output
