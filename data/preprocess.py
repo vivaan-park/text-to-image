@@ -4,6 +4,7 @@
 
 import os
 import random
+import pickle
 
 import tensorflow as tf
 import numpy as np
@@ -60,6 +61,50 @@ class Image_data:
 
         return img, captions, class_id
 
+    def preprocess(self):
+        train_images = []
+        test_images = []
+
+        with open(self.caption_pickle, 'rb') as f:
+            x = pickle.load(f)
+
+            train_captions = x[0]
+            test_captions = x[1]
+            n_max_words = 18
+
+            train_captions = pad_sequence(train_captions,
+                                          n_max_words, mode='post')
+            test_captions = pad_sequence(test_captions,
+                                         n_max_words, mode='post')
+
+            idx_to_word = x[2]
+            word_to_idx = x[3]
+
+        with open(self.train_image_filename_pickle, 'rb') as f:
+            x_list = pickle.load(f)
+
+            for x in x_list :
+                folder_name = x.split('/')[0]
+                file_name = x.split('/')[1] + '.jpg'
+
+                train_images.append(os.path.join(self.image_path,
+                                                 folder_name, file_name))
+
+        with open(self.test_image_filename_pickle, 'rb') as f:
+            x_list = pickle.load(f)
+
+            for x in x_list :
+                folder_name = x.split('/')[0]
+                file_name = x.split('/')[1] + '.jpg'
+
+                test_images.append(os.path.join(self.image_path,
+                                                folder_name, file_name))
+
+        with open(self.class_info_pickle, 'rb') as f:
+            class_id = pickle.load(f, encoding='latin1')
+
+        return class_id, train_captions, train_images,\
+               test_captions, test_images, idx_to_word, word_to_idx
 
 def augmentation(image, augment_height, augment_width, seed):
     ori_image_shape = tf.shape(image)
