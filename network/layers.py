@@ -54,3 +54,6 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
         self.u.assign(u_hat)
 
         self.layer.kernel = self.w / sigma
+
+    def restore_weights(self):
+        self.layer.kernel = self.w
