@@ -42,7 +42,8 @@ def load_captions(filenames):
                 if not len(cap):
                     continue
 
-                morphs = API.analyze(cap.lower())
+                cap = cap.replace('/', '-').lower()
+                morphs = API.analyze(cap)
                 tokens = tokenizer(morphs)
                 if not len(tokens):
                     continue
