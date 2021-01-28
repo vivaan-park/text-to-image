@@ -35,7 +35,7 @@ def load_captions(filenames):
     all_captions = []
     for i in range(len(filenames)):
         cap_path = f'texts/{filenames[i]}.txt'
-        with open(cap_path, 'r') as f:
+        with open(cap_path, 'r', encoding='euc-kr') as f:
             captions = f.read().split('\n')
             cnt = 0
             for cap in captions:
