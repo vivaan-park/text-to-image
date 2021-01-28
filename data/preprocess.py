@@ -4,6 +4,8 @@
 
 import os
 
+import tensorflow as tf
+
 class Image_data:
     def __init__(self, img_height, img_width, channels,
                  dataset_path, augment_flag):
@@ -25,3 +27,11 @@ class Image_data:
             os.path.join(self.text_path, 'captions.pickle')
         self.class_info_pickle = \
             os.path.join(self.text_path, 'class_info.pickle')
+
+
+def augmentation(image, augment_height, augment_width, seed):
+    ori_image_shape = tf.shape(image)
+    image = tf.image.random_flip_left_right(image, seed=seed)
+    image = tf.image.resize(image, [augment_height, augment_width])
+    image = tf.image.random_crop(image, ori_image_shape, seed=seed)
+    return image
