@@ -6,6 +6,7 @@ import os
 import random
 
 import tensorflow as tf
+import numpy as np
 
 class Image_data:
     def __init__(self, img_height, img_width, channels,
@@ -59,9 +60,23 @@ class Image_data:
 
         return img, captions, class_id
 
+
 def augmentation(image, augment_height, augment_width, seed):
     ori_image_shape = tf.shape(image)
     image = tf.image.random_flip_left_right(image, seed=seed)
     image = tf.image.resize(image, [augment_height, augment_width])
     image = tf.image.random_crop(image, ori_image_shape, seed=seed)
     return image
+
+def pad_sequence(captions, n_max_words, mode='post') :
+    if mode == 'post':
+        for i in range(len(captions)):
+            captions[i] = captions[i][:n_max_words]
+            captions[i] = captions[i] + [2] * (n_max_words - len(captions[i]))
+    else:
+        for i in range(len(captions)):
+            captions[i] = captions[i][:n_max_words]
+            captions[i] = [2] * (n_max_words - len(captions[i])) + captions[i]
+
+    captions = np.reshape(captions, [-1, 10, n_max_words])
+    return captions
