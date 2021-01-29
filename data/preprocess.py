@@ -6,7 +6,7 @@ import os
 import random
 import pickle
 
-import tensorflow as tf
+from tensorflow import io, image, cast, float32, greater_equal, cond, shape
 import numpy as np
 
 class Image_data:
@@ -32,11 +32,11 @@ class Image_data:
             os.path.join(self.text_path, 'class_info.pickle')
 
     def image_processing(self, filename, captions, class_id=None):
-        x = tf.io.read_file(filename)
-        x_decode = tf.image.decode_jpeg(x, channels=self.channels,
+        x = io.read_file(filename)
+        x_decode = image.decode_jpeg(x, channels=self.channels,
                                         dct_method='INTEGER_ACCURATE')
-        img = tf.image.resize(x_decode, [self.img_height, self.img_width])
-        img = tf.cast(img, tf.float32) / 127.5 - 1
+        img = image.resize(x_decode, [self.img_height, self.img_width])
+        img = cast(img, float32) / 127.5 - 1
 
         if self.augment_flag:
             augment_height_size = self.img_height + \
@@ -47,12 +47,12 @@ class Image_data:
                                   else int(self.img_width * 0.1))
 
             seed = random.randint(0, 2 ** 31 - 1)
-            condition = tf.greater_equal(
-                tf.random.uniform(shape=[], minval=0.0, maxval=1.0),
+            condition = greater_equal(
+                random.uniform(shape=[], minval=0.0, maxval=1.0),
                 0.5
             )
 
-            img = tf.cond(pred=condition,
+            img = cond(pred=condition,
                           true_fn=lambda: augmentation(
                               img, augment_height_size,
                               augment_width_size, seed
@@ -107,10 +107,10 @@ class Image_data:
                test_captions, test_images, idx_to_word, word_to_idx
 
 def augmentation(image, augment_height, augment_width, seed):
-    ori_image_shape = tf.shape(image)
-    image = tf.image.random_flip_left_right(image, seed=seed)
-    image = tf.image.resize(image, [augment_height, augment_width])
-    image = tf.image.random_crop(image, ori_image_shape, seed=seed)
+    ori_image_shape = shape(image)
+    image = image.random_flip_left_right(image, seed=seed)
+    image = image.resize(image, [augment_height, augment_width])
+    image = image.random_crop(image, ori_image_shape, seed=seed)
     return image
 
 def pad_sequence(captions, n_max_words, mode='post') :
