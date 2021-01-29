@@ -3,7 +3,7 @@
 # MIT License
 
 from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
-                                     LeakyReLU, Activation)
+                                     LeakyReLU, Activation, Dropout)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid,
                         image)
@@ -143,3 +143,7 @@ class DropOut(Layer):
     def __init__(self, drop_rate=0.5, name='DropOut'):
         super(DropOut, self).__init__(name=name)
         self.drop_rate = drop_rate
+
+    def call(self, x, training=None, mask=None):
+        x = Dropout(self.drop_rate, name=self.name)(x, training=training)
+        return x
