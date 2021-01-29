@@ -5,7 +5,7 @@
 from network.class_func import SpectralNormalization
 from utils.params import *
 
-from tensorflow.keras.layers import Layer, Conv2D, Dense
+from tensorflow.keras.layers import Layer, Conv2D, Dense, Flatten
 from tensorflow import pad
 
 class Conv(Layer):
@@ -81,3 +81,9 @@ class FullyConnected(Layer):
             self.fc = Dense(self.units, kernel_initializer=WEIGHT_INITIALIZER,
                             kernel_regularizer=WEIGHT_REGULARIZER_FULLY,
                             use_bias=self.use_bias, name=self.name)
+
+    def call(self, x, training=None, mask=None):
+        x = Flatten(x)
+        x = self.fc(x)
+
+        return x
