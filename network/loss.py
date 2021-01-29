@@ -7,7 +7,8 @@ from network.utils import Relu, func_attention, cosine_similarity
 from tensorflow import (nn, function, reduce_mean, square, math, transpose,
                         zeros_like, ones_like, expand_dims, matmul, tile,
                         reshape, exp, reduce_sum, cast, int32, concat,
-                        float32, where, equal, constant)
+                        float32, where, equal, constant, norm, squeeze,
+                        clip_by_value)
 import numpy as np
 
 ##############################################################################
@@ -197,6 +198,52 @@ def word_loss(img_feature, word_emb, class_id, gamma2=5.0):
     )
     loss1 = reduce_mean(
         nn.sparse_softmax_cross_entropy_with_logits(logits=similarities1,
+                                                    labels=label)
+    )
+
+    loss = loss0 + loss1
+
+    return loss
+
+def sent_loss(img_feature, sent_emb, class_id, gamma3=10.0):
+    batch_size = sent_emb.shape[0]
+    label = cast(range(batch_size), int32)
+
+    masks = []
+
+    for i in range(batch_size):
+        mask = (class_id.numpy() == class_id[i].numpy()).astype(np.uint8)
+        mask[i] = 0
+        masks.append(np.reshape(mask, newshape=[1, -1]))
+
+    masks = cast(concat(masks, axis=0), float32)
+
+    cnn_code = expand_dims(img_feature, axis=0)
+    rnn_code = expand_dims(sent_emb, axis=0)
+
+    cnn_code_norm = norm(cnn_code, axis=-1, keepdims=True)
+    rnn_code_norm = norm(rnn_code, axis=-1, keepdims=True)
+
+    scores0 = matmul(cnn_code, rnn_code, transpose_b=True)
+    norm0 = matmul(cnn_code_norm, rnn_code_norm, transpose_b=True)
+    scores0 = scores0 / clip_by_value(norm0, clip_value_min=1e-8,
+                                      clip_value_max=float('inf')) * gamma3
+
+    scores0 = squeeze(scores0, axis=0)
+
+    scores0 = where(
+        equal(masks, True),
+        x=constant(-float('inf'), dtype=float32, shape=masks.shape),
+        y=scores0
+    )
+    scores1 = transpose(scores0, perm=[1, 0])
+
+    loss0 = reduce_mean(
+        nn.sparse_softmax_cross_entropy_with_logits(logits=scores0,
+                                                    labels=label)
+    )
+    loss1 = reduce_mean(
+        nn.sparse_softmax_cross_entropy_with_logits(logits=scores1,
                                                     labels=label)
     )
 
