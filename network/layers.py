@@ -5,7 +5,7 @@
 from network.class_func import SpectralNormalization
 from utils.params import *
 
-from tensorflow.keras.layers import Layer, Conv2D
+from tensorflow.keras.layers import Layer, Conv2D, Dense
 from tensorflow import pad
 
 class Conv(Layer):
@@ -43,14 +43,14 @@ class Conv(Layer):
         if self.pad > 0:
             h = x.shape[1]
             if h % self.stride == 0:
-                pad = self.pad * 2
+                pad_ = self.pad * 2
             else:
-                pad = max(self.kernel - (h % self.stride), 0)
+                pad_ = max(self.kernel - (h % self.stride), 0)
 
-            pad_top = pad // 2
-            pad_bottom = pad - pad_top
-            pad_left = pad // 2
-            pad_right = pad - pad_left
+            pad_top = pad_ // 2
+            pad_bottom = pad_ - pad_top
+            pad_left = pad_ // 2
+            pad_right = pad_ - pad_left
 
             if self.pad_type == 'reflect':
                 x = pad(x, [[0, 0], [pad_top, pad_bottom],
