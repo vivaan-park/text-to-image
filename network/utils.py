@@ -3,9 +3,10 @@
 # MIT License
 
 from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
-                                     LeakyReLU)
+                                     LeakyReLU, Activation)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid)
+from tensorflow.keras.activations import relu
 
 ##############################################################################
 # Class function
@@ -110,3 +111,9 @@ def Leaky_Relu(x=None, alpha=0.01, name='leaky_relu'):
         return LeakyReLU(alpha=alpha, name=name)
     else:
         return LeakyReLU(alpha=alpha, name=name)(x)
+
+def Relu(x=None, name='relu'):
+    if x is None:
+        return Activation(relu, name=name)
+    else:
+        return Activation(relu, name=name)(x)
