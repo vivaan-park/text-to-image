@@ -6,7 +6,8 @@ from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation, Dropout)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid,
-                        image, equal, argmax, reduce_mean, cast, nn, norm)
+                        image, equal, argmax, reduce_mean, cast, nn, norm,
+                        reduce_min, reduce_max)
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
@@ -194,3 +195,7 @@ def cosine_similarity(x, y):
     similarity = (xy / ((x * y) + 1e-8))
 
     return similarity
+
+def normalization(x):
+    x = (x - reduce_min(x)) / (reduce_max(x) - reduce_min(x))
+    return x
