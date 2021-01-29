@@ -72,3 +72,9 @@ def generator_loss(gan_type, fake_logit):
         fake_loss = -reduce_mean(fake_logit)
 
     return fake_loss
+
+@function
+def L2_loss(x, y):
+    loss = reduce_mean(square(x - y))
+
+    return loss
