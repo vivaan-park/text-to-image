@@ -81,3 +81,11 @@ class BatchNorm(Layer):
             center=True, scale=True, name=self.name
         )(x, training=training)
         return x
+
+##############################################################################
+# Activation Function
+##############################################################################
+
+class GLU(Layer):
+    def __init__(self):
+        super(GLU, self).__init__()
