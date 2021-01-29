@@ -78,3 +78,9 @@ def L2_loss(x, y):
     loss = reduce_mean(square(x - y))
 
     return loss
+
+@function
+def L1_loss(x, y):
+    loss = reduce_mean(abs(x - y))
+
+    return loss
