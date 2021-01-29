@@ -2,12 +2,15 @@
 # <llllllllll@kakao.com>
 # MIT License
 
+from data.utils import merge
+
 import os
 import random
 import pickle
 
 from tensorflow import io, image, cast, float32, greater_equal, cond, shape
 import numpy as np
+import cv2
 
 class Image_data:
     def __init__(self, img_height, img_width, channels,
@@ -128,3 +131,9 @@ def pad_sequence(captions, n_max_words, mode='post') :
 
 def inverse_transform(images):
     return ((images+1.) / 2) * 255.0
+
+def imsave(images, size, path):
+    images = merge(images, size)
+    images = cv2.cvtColor(images.astype('uint8'), cv2.COLOR_RGB2BGR)
+
+    return cv2.imwrite(path, images)
