@@ -3,3 +3,4 @@
 # MIT License
 
 from .class_func import *
+from .layers import *
