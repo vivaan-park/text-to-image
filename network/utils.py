@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid)
-from tensorflow.keras.activations import relu
+from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
 # Class function
@@ -117,3 +117,9 @@ def Relu(x=None, name='relu'):
         return Activation(relu, name=name)
     else:
         return Activation(relu, name=name)(x)
+
+def Tanh(x=None, name='tanh'):
+    if x is None:
+        return Activation(tanh, name=name)
+    else:
+        return Activation(tanh, name=name)(x)
