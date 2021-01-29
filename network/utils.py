@@ -134,3 +134,12 @@ def nearest_up_sample(x, scale_factor=2):
     new_size = [h * scale_factor, w * scale_factor]
     return image.resize(x, size=new_size,
                         method=image.ResizeMethod.NEAREST_NEIGHBOR)
+
+##############################################################################
+# DropOut
+##############################################################################
+
+class DropOut(Layer):
+    def __init__(self, drop_rate=0.5, name='DropOut'):
+        super(DropOut, self).__init__(name=name)
+        self.drop_rate = drop_rate
