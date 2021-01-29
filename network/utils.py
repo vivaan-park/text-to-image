@@ -4,7 +4,7 @@
 
 from tensorflow.keras.layers import Wrapper, Layer, BatchNormalization
 from tensorflow import (initializers, float32, VariableAggregation,
-                        reshape, matmul, transpose, reduce_sum)
+                        reshape, matmul, transpose, reduce_sum, sigmoid)
 
 ##############################################################################
 # Class function
@@ -94,3 +94,12 @@ class GLU(Layer):
         assert input_shape[-1] % 2 == 0, 'channels dont divide 2!'
         self.n_dim = len(input_shape)
         self.output_dim = input_shape[-1] // 2
+
+    def call(self, x, training=None, mask=None):
+        nc = self.output_dim
+        if self.n_dim == 4:
+            return x[:, :, :, :nc] * sigmoid(x[:, :, :, nc:])
+        if self.n_dim == 3:
+            return x[:, :, :nc] * sigmoid(x[:, :, nc:])
+        if self.n_dim == 2:
+            return x[:, :nc] * sigmoid(x[:, nc:])
