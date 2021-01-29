@@ -2,9 +2,57 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from tensorflow import nn
+from network.utils import Relu
+
+from tensorflow import (nn, function, reduce_mean, square, math,
+                        zeros_like, ones_like)
+
+##############################################################################
+# Loss Function
+##############################################################################
 
 def regularization_loss(model):
     loss = nn.scale_regularization_loss(model.losses)
 
     return loss
+
+##############################################################################
+# GAN Loss Function
+##############################################################################
+
+@function
+def discriminator_loss(gan_type, real_logit, fake_logit):
+    real_loss = 0
+    fake_loss = 0
+
+    if real_logit is None :
+        if gan_type == 'lsgan':
+            fake_loss = reduce_mean(square(fake_logit))
+        elif gan_type == 'gan':
+            fake_loss = reduce_mean(
+                nn.sigmoid_cross_entropy_with_logits(
+                    labels=zeros_like(fake_logit), logits=fake_logit
+                )
+            )
+        elif gan_type == 'hinge':
+            fake_loss = reduce_mean(Relu(1 + fake_logit))
+    else :
+        if gan_type == 'lsgan':
+            real_loss = reduce_mean(
+                math.squared_difference(real_logit, 1.0)
+            )
+            fake_loss = reduce_mean(square(fake_logit))
+        elif gan_type == 'gan':
+            real_loss = reduce_mean(
+                nn.sigmoid_cross_entropy_with_logits(labels=ones_like(real_logit),
+                                                     logits=real_logit)
+            )
+            fake_loss = reduce_mean(
+                nn.sigmoid_cross_entropy_with_logits(labels=zeros_like(fake_logit),
+                                                     logits=fake_logit)
+            )
+        elif gan_type == 'hinge':
+            real_loss = reduce_mean(Relu(1 - real_logit))
+            fake_loss = reduce_mean(Relu(1 + fake_logit))
+
+    return real_loss, fake_loss
