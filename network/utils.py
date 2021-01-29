@@ -2,7 +2,8 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from tensorflow.keras.layers import Wrapper, Layer, BatchNormalization
+from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
+                                     LeakyReLU)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid)
 
@@ -103,3 +104,9 @@ class GLU(Layer):
             return x[:, :, :nc] * sigmoid(x[:, :, nc:])
         if self.n_dim == 2:
             return x[:, :nc] * sigmoid(x[:, nc:])
+
+def Leaky_Relu(x=None, alpha=0.01, name='leaky_relu'):
+    if x is None:
+        return LeakyReLU(alpha=alpha, name=name)
+    else:
+        return LeakyReLU(alpha=alpha, name=name)(x)
