@@ -2,7 +2,7 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from tensorflow.keras.layers import Wrapper, Layer
+from tensorflow.keras.layers import Wrapper, Layer, BatchNormalization
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum)
 
@@ -74,3 +74,10 @@ class BatchNorm(Layer):
         super(BatchNorm, self).__init__(name=name)
         self.momentum = momentum
         self.epsilon = epsilon
+
+    def call(self, x, training=None, mask=None):
+        x = BatchNormalization(
+            momentum=self.momentum, epsilon=self.epsilon,
+            center=True, scale=True, name=self.name
+        )(x, training=training)
+        return x
