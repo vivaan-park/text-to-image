@@ -2,6 +2,8 @@
 # <llllllllll@kakao.com>
 # MIT License
 
+import os
+
 import numpy as np
 
 def merge(images, size):
@@ -14,3 +16,8 @@ def merge(images, size):
         img[h*j:h*(j+1), w*i:w*(i+1), :] = image
 
     return img
+
+def check_folder(log_dir):
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    return log_dir
