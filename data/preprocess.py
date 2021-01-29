@@ -137,3 +137,6 @@ def imsave(images, size, path):
     images = cv2.cvtColor(images.astype('uint8'), cv2.COLOR_RGB2BGR)
 
     return cv2.imwrite(path, images)
+
+def save_images(images, size, image_path):
+    return imsave(inverse_transform(images), size, image_path)
