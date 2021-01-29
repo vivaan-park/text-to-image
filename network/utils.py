@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation, Dropout)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid,
-                        image, equal, argmax, reduce_mean, cast)
+                        image, equal, argmax, reduce_mean, cast, nn)
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
@@ -157,3 +157,31 @@ def get_accuracy(logit, label):
     accuracy = reduce_mean(cast(prediction, float32))
 
     return accuracy
+
+##############################################################################
+# Natural Language Processing
+##############################################################################
+
+def func_attention(img_feature, word_emb, gamma1=4.0):
+    bs, seq_len = word_emb.shape[0], word_emb.shape[1]
+    h, w = img_feature.shape[1], img_feature.shape[2]
+    hw = h * w
+
+    context = reshape(img_feature, [bs, hw, -1])
+    attn = matmul(context, word_emb, transpose_b=True)
+    attn = reshape(attn, [bs*hw, seq_len])
+    attn = nn.softmax(attn)
+
+    attn = reshape(attn, [bs, hw, seq_len])
+    attn = transpose(attn, perm=[0, 2, 1])
+    attn = reshape(attn, [bs*seq_len, hw])
+
+    attn = attn * gamma1
+    attn = nn.softmax(attn)
+    attn = reshape(attn, [bs, seq_len, hw])
+
+    weighted_context = matmul(context, attn, transpose_a=True,
+                              transpose_b=True)
+
+    return weighted_context, reshape(transpose(attn, [0, 2, 1]),
+                                     [bs, h, w, seq_len])
