@@ -2,14 +2,16 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-import tensorflow as tf
+from tensorflow.keras.layers import Wrapper, Layer
+from tensorflow import (initializers, float32, VariableAggregation,
+                        reshape, matmul, transpose, reduce_sum)
 
-class SpectralNormalization(tf.keras.layers.Wrapper):
+class SpectralNormalization(Wrapper):
     def __init__(self, layer, iteration=1, eps=1e-12, training=True, **kwargs):
         self.iteration = iteration
         self.eps = eps
         self.do_power_iteration = training
-        if not isinstance(layer, tf.keras.layers.Layer):
+        if not isinstance(layer, Layer):
             raise ValueError(
                 'Please initialize `TimeDistributed` layer with a '
                 f'`Layer` instance. You passed: {layer}')
@@ -23,10 +25,11 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
 
         self.u = self.add_weight(
             shape=(1, self.w_shape[-1]),
-            initializer=tf.initializers.TruncatedNormal(stddev=0.02),
+            initializer=initializers.TruncatedNormal(stddev=0.02),
             trainable=False,
             name=self.name + '_u',
-            dtype=tf.float32, aggregation=tf.VariableAggregation.ONLY_FIRST_REPLICA
+            dtype=float32,
+            aggregation=VariableAggregation.ONLY_FIRST_REPLICA
         )
 
         super(SpectralNormalization, self).build()
@@ -37,20 +40,20 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
         return output
 
     def update_weights(self):
-        w_reshaped = tf.reshape(self.w, [-1, self.w_shape[-1]])
+        w_reshaped = reshape(self.w, [-1, self.w_shape[-1]])
 
         u_hat = self.u
         v_hat = None
 
         if self.do_power_iteration:
             for _ in range(self.iteration):
-                v_ = tf.matmul(u_hat, tf.transpose(w_reshaped))
-                v_hat = v_ / (tf.reduce_sum(v_ ** 2) ** 0.5 + self.eps)
+                v_ = matmul(u_hat, transpose(w_reshaped))
+                v_hat = v_ / (reduce_sum(v_ ** 2) ** 0.5 + self.eps)
 
-                u_ = tf.matmul(v_hat, w_reshaped)
-                u_hat = u_ / (tf.reduce_sum(u_ ** 2) ** 0.5 + self.eps)
+                u_ = matmul(v_hat, w_reshaped)
+                u_hat = u_ / (reduce_sum(u_ ** 2) ** 0.5 + self.eps)
 
-        sigma = tf.matmul(tf.matmul(v_hat, w_reshaped), tf.transpose(u_hat))
+        sigma = matmul(matmul(v_hat, w_reshaped), transpose(u_hat))
         self.u.assign(u_hat)
 
         self.layer.kernel = self.w / sigma
