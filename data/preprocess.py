@@ -125,3 +125,6 @@ def pad_sequence(captions, n_max_words, mode='post') :
 
     captions = np.reshape(captions, [-1, 10, n_max_words])
     return captions
+
+def inverse_transform(images):
+    return ((images+1.) / 2) * 255.0
