@@ -2,5 +2,5 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from .class_func import *
+from .utils import *
 from .layers import *

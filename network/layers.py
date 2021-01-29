@@ -2,7 +2,7 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from network.class_func import SpectralNormalization
+from network.utils import SpectralNormalization
 from utils.params import *
 
 from tensorflow.keras.layers import Layer, Conv2D, Dense, Flatten
