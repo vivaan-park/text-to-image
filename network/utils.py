@@ -89,3 +89,8 @@ class BatchNorm(Layer):
 class GLU(Layer):
     def __init__(self):
         super(GLU, self).__init__()
+
+    def build(self, input_shape):
+        assert input_shape[-1] % 2 == 0, 'channels dont divide 2!'
+        self.n_dim = len(input_shape)
+        self.output_dim = input_shape[-1] // 2
