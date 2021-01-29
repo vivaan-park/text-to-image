@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation, Dropout)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid,
-                        image)
+                        image, equal, argmax, reduce_mean, cast)
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
@@ -147,3 +147,13 @@ class DropOut(Layer):
     def call(self, x, training=None, mask=None):
         x = Dropout(self.drop_rate, name=self.name)(x, training=training)
         return x
+
+##############################################################################
+# Accuracy
+##############################################################################
+
+def get_accuracy(logit, label):
+    prediction = equal(argmax(logit, -1), argmax(label, -1))
+    accuracy = reduce_mean(cast(prediction, float32))
+
+    return accuracy
