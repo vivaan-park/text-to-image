@@ -6,7 +6,9 @@ from network.utils import Relu, func_attention, cosine_similarity
 
 from tensorflow import (nn, function, reduce_mean, square, math, transpose,
                         zeros_like, ones_like, expand_dims, matmul, tile,
-                        reshape, exp, reduce_sum)
+                        reshape, exp, reduce_sum, cast, int32, concat,
+                        float32, where, equal, constant)
+import numpy as np
 
 ##############################################################################
 # Loss Function
@@ -140,5 +142,64 @@ def word_level_correlation_loss(img_feature, word_emb,
     )
 
     loss = (word_match_loss + word_mismatch_loss) / 2.0
+
+    return loss
+
+def word_loss(img_feature, word_emb, class_id, gamma2=5.0):
+    batch_size = word_emb.shape[0]
+    seq_len = word_emb.shape[1]
+
+    label = cast(range(batch_size), int32)
+    masks = []
+    similarities = []
+
+    for i in range(batch_size):
+        mask = (class_id.numpy() == class_id[i].numpy()).astype(np.uint8)
+        mask[i] = 0
+        masks.append(np.reshape(mask, newshape=[1, -1]))
+
+        word = expand_dims(word_emb[i, :, :], axis=0)
+        word = tile(word, multiples=[batch_size, 1, 1])
+
+        context = img_feature
+
+        weiContext, _ = func_attention(context, word)
+        weiContext = transpose(weiContext, perm=[0, 2, 1])
+
+        word = reshape(word, shape=[batch_size * seq_len, -1])
+        weiContext = reshape(weiContext, shape=[batch_size * seq_len, -1])
+
+        row_sim = cosine_similarity(word, weiContext)
+        row_sim = reshape(row_sim, shape=[batch_size, seq_len])
+
+        row_sim = exp(row_sim * gamma2)
+        row_sim = reduce_sum(row_sim, axis=-1, keepdims=True)
+        row_sim = math.log(row_sim)
+
+        similarities.append(row_sim)
+
+    similarities = concat(similarities, axis=-1)
+    masks = cast(concat(masks, axis=0), float32)
+
+    similarities = similarities * gamma2
+
+    similarities = where(
+        equal(masks, True),
+        x=constant(-float('inf'), dtype=float32, shape=masks.shape),
+        y=similarities
+    )
+
+    similarities1 = transpose(similarities, perm=[1, 0])
+
+    loss0 = reduce_mean(
+        nn.sparse_softmax_cross_entropy_with_logits(logits=similarities,
+                                                    labels=label)
+    )
+    loss1 = reduce_mean(
+        nn.sparse_softmax_cross_entropy_with_logits(logits=similarities1,
+                                                    labels=label)
+    )
+
+    loss = loss0 + loss1
 
     return loss
