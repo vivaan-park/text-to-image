@@ -62,3 +62,22 @@ class Conv(Layer):
         x = self.conv(x)
 
         return x
+
+class FullyConnected(Layer):
+    def __init__(self, units, use_bias=True, sn=False, name='FullyConnected'):
+        super(FullyConnected, self).__init__(name=name)
+        self.units = units
+        self.use_bias = use_bias
+        self.sn = sn
+
+        if self.sn:
+            self.fc = SpectralNormalization(
+                Dense(self.units, kernel_initializer=WEIGHT_INITIALIZER,
+                      kernel_regularizer=WEIGHT_REGULARIZER_FULLY,
+                      use_bias=self.use_bias),
+                name='sn_' + self.name
+            )
+        else:
+            self.fc = Dense(self.units, kernel_initializer=WEIGHT_INITIALIZER,
+                            kernel_regularizer=WEIGHT_REGULARIZER_FULLY,
+                            use_bias=self.use_bias, name=self.name)
