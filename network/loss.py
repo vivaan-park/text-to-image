@@ -84,3 +84,14 @@ def L1_loss(x, y):
     loss = reduce_mean(abs(x - y))
 
     return loss
+
+##############################################################################
+# NLP Loss Function
+##############################################################################
+
+def caption_loss(cap_output, captions):
+    loss = nn.softmax_cross_entropy_with_logits(logits=cap_output,
+                                                labels=captions)
+    loss = reduce_mean(loss)
+
+    return loss
