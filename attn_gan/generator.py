@@ -4,6 +4,7 @@
 
 from tensorflow.keras import Model
 from tensorflow.keras.applications.inception_v3 import preprocess_input, InceptionV3
+from tensorflow import image
 
 from network.layers import Conv, FullyConnected
 
@@ -27,3 +28,17 @@ class CnnEncoder(Model):
                                 use_bias=False, name='emb_feature_conv')
         self.emb_code = FullyConnected(units=self.embed_dim,
                                        use_bias=True, name='emb_code_fc')
+
+    def call(self, x, training=True, mask=None):
+        x = ((x + 1) / 2) * 255.0
+        x = image.resize(x, size=[299, 299],
+                         method=image.ResizeMethod.BILINEAR)
+        x = self.inception_v3_preprocess(x)
+
+        code = self.inception_v3(x)
+        feature = self.inception_v3_mixed7(x)
+
+        feature = self.emb_feature(feature)
+        code = self.emb_code(code)
+
+        return feature, code
