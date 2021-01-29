@@ -4,6 +4,8 @@
 
 import os
 
+from tensorflow import config
+
 def check_folder(log_dir):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -11,3 +13,15 @@ def check_folder(log_dir):
 
 def str2bool(x):
     return x.lower() in ('true')
+
+def automatic_gpu_usage() :
+    gpus = config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,",
+                  len(logical_gpus), "Logical GPUs")
+        except RuntimeError as e:
+            print(e)
