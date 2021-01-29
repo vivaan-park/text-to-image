@@ -140,3 +140,6 @@ def imsave(images, size, path):
 
 def save_images(images, size, image_path):
     return imsave(inverse_transform(images), size, image_path)
+
+def return_images(images, size):
+    return merge(images, size)
