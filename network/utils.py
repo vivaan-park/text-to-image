@@ -6,6 +6,10 @@ from tensorflow.keras.layers import Wrapper, Layer
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum)
 
+##############################################################################
+# Class function
+##############################################################################
+
 class SpectralNormalization(Wrapper):
     def __init__(self, layer, iteration=1, eps=1e-12, training=True, **kwargs):
         self.iteration = iteration
@@ -60,3 +64,13 @@ class SpectralNormalization(Wrapper):
 
     def restore_weights(self):
         self.layer.kernel = self.w
+
+##############################################################################
+# Normalization
+##############################################################################
+
+class BatchNorm(Layer):
+    def __init__(self, momentum=0.9, epsilon=1e-5, name='BatchNorm'):
+        super(BatchNorm, self).__init__(name=name)
+        self.momentum = momentum
+        self.epsilon = epsilon
