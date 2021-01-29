@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation, Dropout)
 from tensorflow import (initializers, float32, VariableAggregation,
                         reshape, matmul, transpose, reduce_sum, sigmoid,
-                        image, equal, argmax, reduce_mean, cast, nn)
+                        image, equal, argmax, reduce_mean, cast, nn, norm)
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
@@ -185,3 +185,12 @@ def func_attention(img_feature, word_emb, gamma1=4.0):
 
     return weighted_context, reshape(transpose(attn, [0, 2, 1]),
                                      [bs, h, w, seq_len])
+
+def cosine_similarity(x, y):
+    xy = reduce_sum(x * y, axis=-1)
+    x = norm(x, axis=-1)
+    y = norm(y, axis=-1)
+
+    similarity = (xy / ((x * y) + 1e-8))
+
+    return similarity
