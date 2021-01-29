@@ -2,8 +2,6 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from data.utils import merge
-
 import os
 import random
 import pickle
@@ -131,6 +129,17 @@ def pad_sequence(captions, n_max_words, mode='post') :
 
 def inverse_transform(images):
     return ((images+1.) / 2) * 255.0
+
+def merge(images, size):
+    h, w = images.shape[1], images.shape[2]
+    c = images.shape[3]
+    img = np.zeros((h * size[0], w * size[1], c))
+    for idx, image in enumerate(images):
+        i = idx % size[1]
+        j = idx // size[1]
+        img[h*j:h*(j+1), w*i:w*(i+1), :] = image
+
+    return img
 
 def imsave(images, size, path):
     images = merge(images, size)
