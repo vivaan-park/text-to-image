@@ -3,7 +3,7 @@
 # MIT License
 
 from tensorflow.keras.layers import (Layer, LSTMCell, GRUCell, RNN,
-                                     Bidirectional)
+                                     Bidirectional, Embedding)
 from tensorflow import concat
 
 class VariousRNN(Layer):
@@ -60,3 +60,8 @@ class VariousRNN(Layer):
         word_emb = output
 
         return word_emb, sent_emb
+
+def EmbedSequence(n_words, embed_dim, trainable=True, name='embed_layer') :
+    emeddings = Embedding(input_dim=n_words, output_dim=embed_dim,
+                          trainable=trainable, name=name)
+    return emeddings
