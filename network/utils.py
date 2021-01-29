@@ -5,7 +5,8 @@
 from tensorflow.keras.layers import (Wrapper, Layer, BatchNormalization,
                                      LeakyReLU, Activation)
 from tensorflow import (initializers, float32, VariableAggregation,
-                        reshape, matmul, transpose, reduce_sum, sigmoid)
+                        reshape, matmul, transpose, reduce_sum, sigmoid,
+                        image)
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
@@ -123,3 +124,13 @@ def Tanh(x=None, name='tanh'):
         return Activation(tanh, name=name)
     else:
         return Activation(tanh, name=name)(x)
+
+##############################################################################
+# Pooling
+##############################################################################
+
+def nearest_up_sample(x, scale_factor=2):
+    _, h, w, _ = x.get_shape().as_list()
+    new_size = [h * scale_factor, w * scale_factor]
+    return image.resize(x, size=new_size,
+                        method=image.ResizeMethod.NEAREST_NEIGHBOR)
