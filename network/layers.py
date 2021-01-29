@@ -2,58 +2,38 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-import tensorflow as tf
+from network.class_func import SpectralNormalization
+from utils.params import *
 
-class SpectralNormalization(tf.keras.layers.Wrapper):
-    def __init__(self, layer, iteration=1, eps=1e-12, training=True, **kwargs):
-        self.iteration = iteration
-        self.eps = eps
-        self.do_power_iteration = training
-        if not isinstance(layer, tf.keras.layers.Layer):
-            raise ValueError(
-                'Please initialize `TimeDistributed` layer with a '
-                f'`Layer` instance. You passed: {layer}')
-        super(SpectralNormalization, self).__init__(layer, **kwargs)
+from tensorflow.keras.layers import Layer, Conv2D
 
-    def build(self, input_shape=None):
-        self.layer.build(input_shape)
+class Conv(Layer):
+    def __init__(self, channels, kernel=3, stride=1, pad=0,
+                 pad_type='zero', use_bias=True, sn=False, name='Conv'):
+        super(Conv, self).__init__(name=name)
+        self.channels = channels
+        self.kernel = kernel
+        self.stride = stride
+        self.pad = pad
+        self.pad_type = pad_type
+        self.use_bias = use_bias
+        self.sn = sn
 
-        self.w = self.layer.kernel
-        self.w_shape = self.w.shape.as_list()
-
-        self.u = self.add_weight(
-            shape=(1, self.w_shape[-1]),
-            initializer=tf.initializers.TruncatedNormal(stddev=0.02),
-            trainable=False,
-            name=self.name + '_u',
-            dtype=tf.float32, aggregation=tf.VariableAggregation.ONLY_FIRST_REPLICA
-        )
-
-        super(SpectralNormalization, self).build()
-
-    def call(self, inputs, training=None, mask=None):
-        self.update_weights()
-        output = self.layer(inputs)
-        return output
-
-    def update_weights(self):
-        w_reshaped = tf.reshape(self.w, [-1, self.w_shape[-1]])
-
-        u_hat = self.u
-        v_hat = None
-
-        if self.do_power_iteration:
-            for _ in range(self.iteration):
-                v_ = tf.matmul(u_hat, tf.transpose(w_reshaped))
-                v_hat = v_ / (tf.reduce_sum(v_ ** 2) ** 0.5 + self.eps)
-
-                u_ = tf.matmul(v_hat, w_reshaped)
-                u_hat = u_ / (tf.reduce_sum(u_ ** 2) ** 0.5 + self.eps)
-
-        sigma = tf.matmul(tf.matmul(v_hat, w_reshaped), tf.transpose(u_hat))
-        self.u.assign(u_hat)
-
-        self.layer.kernel = self.w / sigma
-
-    def restore_weights(self):
-        self.layer.kernel = self.w
+        if self.sn :
+            self.conv = SpectralNormalization(
+                Conv2D(
+                    filters=self.channels, kernel_size=self.kernel,
+                    kernel_initializer=WEIGHT_INITIALIZER,
+                    kernel_regularizer=WEIGHT_REGULARIZER,
+                    strides=self.stride, use_bias=self.use_bias
+                ),
+                name='sn_' + self.name
+            )
+        else :
+            self.conv = Conv2D(
+                filters=self.channels, kernel_size=self.kernel,
+                kernel_initializer=WEIGHT_INITIALIZER,
+                kernel_regularizer=WEIGHT_REGULARIZER,
+                strides=self.stride, use_bias=self.use_bias,
+                name=self.name
+            )
