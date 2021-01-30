@@ -12,7 +12,7 @@ from tensorflow import (image, equal, reshape, expand_dims, squeeze,
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
-from network.utils import DropOut, Relu
+from network.utils import DropOut, Relu, BatchNorm, GLU
 from network.loss import reparametrize
 
 class CnnEncoder(Model):
@@ -159,3 +159,13 @@ class UpBlock(Layer):
         self.channels = channels
 
         self.model = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [Conv(self.channels * 2, kernel=3, stride=1, pad=1,
+                       pad_type='reflect', use_bias=False, name='conv')]
+        model += [BatchNorm(name='batch_norm')]
+        model += [GLU()]
+        model = Sequential(model)
+
+        return model
