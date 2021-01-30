@@ -12,7 +12,7 @@ from tensorflow import (image, equal, reshape, expand_dims, squeeze,
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
-from network.utils import DropOut, Relu, BatchNorm, GLU
+from network.utils import DropOut, Relu, BatchNorm, GLU, nearest_up_sample
 from network.loss import reparametrize
 
 class CnnEncoder(Model):
@@ -169,3 +169,9 @@ class UpBlock(Layer):
         model = Sequential(model)
 
         return model
+
+    def call(self, x_init, training=True):
+        x = nearest_up_sample(x_init, scale_factor=2)
+        x = self.model(x, training=training)
+
+        return x
