@@ -4,7 +4,7 @@
 
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import Sequential, Model
-from tensorflow import concat
+from tensorflow import concat, reshape, tile
 
 from network.layers import Conv
 from network.utils import Leaky_Relu, BatchNorm
@@ -192,3 +192,21 @@ class Discriminator(Model):
         self.d_64 = Discriminator_64(self.channels, name='d_64')
         self.d_128 = Discriminator_128(self.channels, name='d_128')
         self.d_256 = Discriminator_256(self.channels, name='d_256')
+
+    def call(self, inputs, training=True, mask=None):
+        x_64, x_128, x_256, sent_emb = inputs
+        sent_emb = reshape(sent_emb, shape=[-1, 1, 1, self.embed_dim])
+        sent_emb = tile(sent_emb, multiples=[1, 4, 4, 1])
+
+        x_64_uncond_logit, x_64_cond_logit = \
+            self.d_64([x_64, sent_emb], training=training)
+        x_128_uncond_logit, x_128_cond_logit = \
+            self.d_128([x_128, sent_emb], training=training)
+        x_256_uncond_logit, x_256_cond_logit = \
+            self.d_256([x_256, sent_emb], training=training)
+
+        uncond_logits = [x_64_uncond_logit, x_128_uncond_logit,
+                         x_256_uncond_logit]
+        cond_logits = [x_64_cond_logit, x_128_cond_logit, x_256_cond_logit]
+
+        return uncond_logits, cond_logits
