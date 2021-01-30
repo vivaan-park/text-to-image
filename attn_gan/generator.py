@@ -282,3 +282,12 @@ class Generator_256(Layer):
         x = self.model(h_c_code, training=training)
 
         return x
+
+class Generator(Model):
+    def __init__(self, channels, name='Generator'):
+        super(Generator, self).__init__(name=name)
+        self.channels = channels
+
+        self.g_64 = Generator_64(self.channels * 16, name='g_64')
+        self.g_128 = Generator_128(self.channels, name='g_128')
+        self.g_256 = Generator_256(self.channels, name='g_256')
