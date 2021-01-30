@@ -6,7 +6,9 @@ from tensorflow.keras import Model, Sequential
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.applications.inception_v3 import (preprocess_input,
                                                         InceptionV3)
-from tensorflow import image, equal
+from tensorflow import (image, equal, reshape, expand_dims, squeeze,
+                        matmul, tile, where, constant, float32, nn,
+                        transpose)
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
@@ -122,3 +124,31 @@ class SpatialAttention(Layer):
         self.bs, self.h, self.w, _ = input_shape[0]
         self.hw = self.h * self.w
         self.seq_len = input_shape[2][1]
+
+    def call(self, inputs, training=True):
+        x, sentence, context, mask = inputs
+        x = reshape(x, shape=[self.bs, self.hw, -1])
+
+        context = expand_dims(context, axis=1)
+        context = self.word_conv(context)
+        context = squeeze(context, axis=1)
+
+        attn = matmul(x, context, transpose_b=True)
+        attn = reshape(attn, shape=[self.bs * self.hw, self.seq_len])
+
+        mask = tile(mask, multiples=[self.hw, 1])
+        attn = where(
+            equal(mask, True),
+            x=constant(-float('inf'), dtype=float32, shape=mask.shape),
+            y=attn
+        )
+        attn = nn.softmax(attn)
+        attn = reshape(attn, shape=[self.bs, self.hw, self.seq_len])
+
+        weighted_context = matmul(context, attn, transpose_a=True,
+                                  transpose_b=True)
+        weighted_context = reshape(transpose(weighted_context, perm=[0, 2, 1]),
+                                   shape=[self.bs, self.h, self.w, -1])
+        word_attn = reshape(attn, shape=[self.bs, self.h, self.w, -1])
+
+        return weighted_context, word_attn
