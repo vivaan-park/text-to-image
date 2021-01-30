@@ -59,3 +59,10 @@ class UpBlock(Layer):
         x = self.model(x, training=training)
 
         return x
+
+class DownBlock(Layer):
+    def __init__(self, channels, name='DownBlock'):
+        super(DownBlock, self).__init__(name=name)
+        self.channels = channels
+
+        self.model = self.architecture()
