@@ -4,6 +4,7 @@
 
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import Sequential
+from tensorflow import concat
 
 from network.layers import Conv
 from network.utils import Leaky_Relu, BatchNorm
@@ -45,3 +46,17 @@ class Discriminator_64(Layer):
         code_block = Sequential(code_block)
 
         return model, code_block
+
+    def call(self, inputs, training=True):
+        x, sent_emb = inputs
+
+        x = self.model(x, training=training)
+
+        uncond_logit = self.uncond_logit_conv(x)
+
+        h_c_code = concat([x, sent_emb], axis=-1)
+        h_c_code = self.code_block(h_c_code, training=training)
+
+        cond_logit = self.cond_logit_conv(h_c_code)
+
+        return uncond_logit, cond_logit
