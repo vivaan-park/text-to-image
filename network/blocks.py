@@ -3,7 +3,7 @@
 # MIT License
 
 from network.layers import Conv
-from network.utils import BatchNorm, GLU, nearest_up_sample
+from network.utils import BatchNorm, GLU, nearest_up_sample, Leaky_Relu
 
 from tensorflow.keras.layers import Layer
 from tensorflow import name_scope
@@ -66,3 +66,13 @@ class DownBlock(Layer):
         self.channels = channels
 
         self.model = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [Conv(self.channels, kernel=4, stride=2, pad=1,
+                       pad_type='reflect', use_bias=False, name='conv')]
+        model += [BatchNorm(name='batch_norm')]
+        model += [Leaky_Relu(alpha=0.2)]
+        model = Sequential(model)
+
+        return model
