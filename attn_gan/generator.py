@@ -6,16 +6,14 @@ from tensorflow.keras import Model, Sequential
 from tensorflow.keras.layers import Layer, Reshape
 from tensorflow.keras.applications.inception_v3 import (preprocess_input,
                                                         InceptionV3)
-from tensorflow import (image, equal, reshape, expand_dims, squeeze,
-                        matmul, tile, where, constant, float32, nn,
-                        transpose, concat)
+from tensorflow import (image, concat, reshape, expand_dims, squeeze, matmul,
+                        tile, where, constant, float32, nn, transpose, equal)
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
-from network.utils import (DropOut, Relu, BatchNorm, GLU, nearest_up_sample,
-                           Tanh)
+from network.utils import DropOut, Relu, BatchNorm, GLU, Tanh
 from network.loss import reparametrize
-from network.blocks import ResBlock
+from network.blocks import ResBlock, UpBlock
 
 class CnnEncoder(Model):
     def __init__(self, embed_dim, name='CnnEncoder'):
@@ -154,29 +152,6 @@ class SpatialAttention(Layer):
         word_attn = reshape(attn, shape=[self.bs, self.h, self.w, -1])
 
         return weighted_context, word_attn
-
-class UpBlock(Layer):
-    def __init__(self, channels, name='UpBlock'):
-        super(UpBlock, self).__init__(name=name)
-        self.channels = channels
-
-        self.model = self.architecture()
-
-    def architecture(self):
-        model = []
-        model += [Conv(self.channels * 2, kernel=3, stride=1, pad=1,
-                       pad_type='reflect', use_bias=False, name='conv')]
-        model += [BatchNorm(name='batch_norm')]
-        model += [GLU()]
-        model = Sequential(model)
-
-        return model
-
-    def call(self, x_init, training=True):
-        x = nearest_up_sample(x_init, scale_factor=2)
-        x = self.model(x, training=training)
-
-        return x
 
 class Generator_64(Layer):
     def __init__(self, channels, name='Generator_64'):

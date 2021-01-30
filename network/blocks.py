@@ -3,10 +3,11 @@
 # MIT License
 
 from network.layers import Conv
-from network.utils import BatchNorm, GLU
+from network.utils import BatchNorm, GLU, nearest_up_sample
 
 from tensorflow.keras.layers import Layer
 from tensorflow import name_scope
+from tensorflow.keras import Sequential
 
 class ResBlock(Layer):
     def __init__(self, channels, name='ResBlock'):
@@ -35,3 +36,26 @@ class ResBlock(Layer):
                 x = self.batch_norm_1(x, training=training)
 
             return x + x_init
+
+class UpBlock(Layer):
+    def __init__(self, channels, name='UpBlock'):
+        super(UpBlock, self).__init__(name=name)
+        self.channels = channels
+
+        self.model = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [Conv(self.channels * 2, kernel=3, stride=1, pad=1,
+                       pad_type='reflect', use_bias=False, name='conv')]
+        model += [BatchNorm(name='batch_norm')]
+        model += [GLU()]
+        model = Sequential(model)
+
+        return model
+
+    def call(self, x_init, training=True):
+        x = nearest_up_sample(x_init, scale_factor=2)
+        x = self.model(x, training=training)
+
+        return x
