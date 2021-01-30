@@ -250,3 +250,11 @@ class Generator_128(Layer):
         x = self.generate_img_block(h_code)
 
         return c_code, h_code, x
+
+class Generator_256(Layer):
+    def __init__(self, channels, name='Generator_256'):
+        super(Generator_256, self).__init__(name=name)
+        self.channels = channels
+
+        self.spatial_attention = SpatialAttention(channels=self.channels)
+        self.model = self.architecture()
