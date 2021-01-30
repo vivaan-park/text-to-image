@@ -10,6 +10,7 @@ from tensorflow import image, equal
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
 from network.utils import DropOut, Relu
+from network.loss import reparametrize
 
 class CnnEncoder(Model):
     def __init__(self, embed_dim, name='CnnEncoder'):
@@ -94,3 +95,13 @@ class CA_NET(Model):
         model = Sequential(model)
 
         return model
+
+    def call(self, sent_emb, training=True, mask=None):
+        x = self.model(sent_emb, training=training)
+
+        mu = x[:, :self.c_dim]
+        logvar = x[:, self.c_dim:]
+
+        c_code = reparametrize(mu, logvar)
+
+        return c_code, mu, logvar
