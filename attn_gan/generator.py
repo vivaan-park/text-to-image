@@ -2,12 +2,13 @@
 # <llllllllll@kakao.com>
 # MIT License
 
-from tensorflow.keras import Model
+from tensorflow.keras import Model, Sequential
 from tensorflow.keras.applications.inception_v3 import preprocess_input, InceptionV3
 from tensorflow import image
 
 from network.layers import Conv, FullyConnected
-from network.nlp import VariousRNN
+from network.nlp import VariousRNN, EmbedSequence
+from network.utils import DropOut
 
 class CnnEncoder(Model):
     def __init__(self, embed_dim, name='CnnEncoder'):
@@ -61,3 +62,12 @@ class RnnEncoder(Model):
         self.rnn = VariousRNN(self.n_hidden, self.n_layer, self.drop_rate,
                               self.bidirectional, rnn_type=self.rnn_type,
                               name=self.rnn_type + '_rnn')
+
+    def architecture(self):
+        model = []
+        model += [EmbedSequence(self.n_words, self.embed_dim,
+                                name='embed_layer')]
+        model += [DropOut(self.drop_rate, name='dropout')]
+        model = Sequential(model)
+
+        return model
