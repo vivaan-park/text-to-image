@@ -3,8 +3,9 @@
 # MIT License
 
 from tensorflow.keras import Model, Sequential
-from tensorflow.keras.applications.inception_v3 import preprocess_input, InceptionV3
-from tensorflow import image
+from tensorflow.keras.applications.inception_v3 import (preprocess_input,
+                                                        InceptionV3)
+from tensorflow import image, equal
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
@@ -71,3 +72,10 @@ class RnnEncoder(Model):
         model = Sequential(model)
 
         return model
+
+    def call(self, caption, training=True, mask=None):
+        x = self.model(caption, training=training)
+        word_emb, sent_emb = self.rnn(x, training=training)
+        mask = equal(caption, 0)
+
+        return word_emb, sent_emb, mask
