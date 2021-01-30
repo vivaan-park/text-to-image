@@ -117,3 +117,8 @@ class SpatialAttention(Layer):
         self.sentence_fc = FullyConnected(units=self.channels, name='sent_fc')
         self.sentence_conv = Conv(self.channels, kernel=1, stride=1,
                                   use_bias=False, name='sentence_conv')
+
+    def build(self, input_shape):
+        self.bs, self.h, self.w, _ = input_shape[0]
+        self.hw = self.h * self.w
+        self.seq_len = input_shape[2][1]
