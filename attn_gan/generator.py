@@ -3,6 +3,7 @@
 # MIT License
 
 from tensorflow.keras import Model, Sequential
+from tensorflow.keras.layers import Layer
 from tensorflow.keras.applications.inception_v3 import (preprocess_input,
                                                         InceptionV3)
 from tensorflow import image, equal
@@ -105,3 +106,14 @@ class CA_NET(Model):
         c_code = reparametrize(mu, logvar)
 
         return c_code, mu, logvar
+
+class SpatialAttention(Layer):
+    def __init__(self, channels, name='SpatialAttention'):
+        super(SpatialAttention, self).__init__(name=name)
+        self.channels = channels
+
+        self.word_conv = Conv(self.channels, kernel=1, stride=1,
+                              use_bias=False, name='word_conv')
+        self.sentence_fc = FullyConnected(units=self.channels, name='sent_fc')
+        self.sentence_conv = Conv(self.channels, kernel=1, stride=1,
+                                  use_bias=False, name='sentence_conv')
