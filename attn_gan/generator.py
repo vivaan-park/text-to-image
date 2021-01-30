@@ -15,6 +15,7 @@ from network.nlp import VariousRNN, EmbedSequence
 from network.utils import (DropOut, Relu, BatchNorm, GLU, nearest_up_sample,
                            Tanh)
 from network.loss import reparametrize
+from network.blocks import ResBlock
 
 class CnnEncoder(Model):
     def __init__(self, embed_dim, name='CnnEncoder'):
@@ -221,3 +222,20 @@ class Generator_128(Layer):
         self.spatial_attention = SpatialAttention(channels=self.channels)
 
         self.model, self.generate_img_block = self.architecture()
+
+    def architecture(self):
+        model = []
+        for i in range(2):
+            model += [ResBlock(self.channels * 2, name='resblock_' + str(i))]
+
+        model += [UpBlock(self.channels, name='up_block')]
+        model = Sequential(model)
+
+        generate_img_block = []
+        generate_img_block += [Conv(channels=3, kernel=3, stride=1, pad=1,
+                                    pad_type='reflect', use_bias=False,
+                                    name='g_128_logit')]
+        generate_img_block += [Tanh()]
+        generate_img_block = Sequential(generate_img_block)
+
+        return model, generate_img_block
