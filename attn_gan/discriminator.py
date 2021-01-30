@@ -30,7 +30,7 @@ class Discriminator_64(Layer):
         for i in range(3):
             model += [Conv(self.channels * 2, kernel=4, stride=2, pad=1,
                            pad_type='reflect', use_bias=False,
-                           name='conv_' + str(i))]
+                           name=f'conv_{str(i)}')]
             model += [BatchNorm(name=f'batch_norm_{str(i)}')]
             model += [Leaky_Relu(alpha=0.2)]
 
@@ -83,7 +83,7 @@ class Discriminator_128(Layer):
             model += [Conv(self.channels * 2, kernel=4, stride=2, pad=1,
                            pad_type='reflect', use_bias=False,
                            name=f'conv_{str(i)}')]
-            model += [BatchNorm(name='batch_norm_' + str(i))]
+            model += [BatchNorm(name=f'batch_norm_{str(i)}')]
             model += [Leaky_Relu(alpha=0.2)]
 
             self.channels = self.channels * 2
@@ -129,3 +129,42 @@ class Discriminator_256(Layer):
         self.cond_logit_conv = Conv(channels=1, kernel=4, stride=4,
                                     use_bias=True, name='cond_d_logit')
         self.model, self.code_block = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [Conv(self.channels, kernel=4, stride=2, pad=1,
+                       pad_type='reflect', use_bias=False, name='conv')]
+        model += [Leaky_Relu(alpha=0.2)]
+
+        for i in range(3):
+            model += [Conv(self.channels * 2, kernel=4, stride=2, pad=1,
+                           pad_type='reflect', use_bias=False,
+                           name=f'conv_{str(i)}')]
+            model += [BatchNorm(name=f'batch_norm_{str(i)}')]
+            model += [Leaky_Relu(alpha=0.2)]
+
+            self.channels = self.channels * 2
+
+        for i in range(2):
+            model += [DownBlock(self.channels * 2,
+                                name=f'down_block_{str(i)}')]
+
+        for i in range(2):
+            model += [Conv(self.channels, kernel=3, stride=1, pad=1,
+                           pad_type='reflect', use_bias=False,
+                           name=f'last_conv_{str(i)}')]
+            model += [BatchNorm(name=f'last_batch_norm_{str(i)}')]
+            model += [Leaky_Relu(alpha=0.2)]
+
+        model = Sequential(model)
+
+        code_block = []
+        code_block += [Conv(self.channels, kernel=3, stride=1, pad=1,
+                            pad_type='reflect', use_bias=False,
+                            name='conv_code')]
+        code_block += [BatchNorm(name='batch_norm_code')]
+        code_block += [Leaky_Relu(alpha=0.2)]
+
+        code_block = Sequential(code_block)
+
+        return model, code_block
