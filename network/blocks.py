@@ -76,3 +76,8 @@ class DownBlock(Layer):
         model = Sequential(model)
 
         return model
+
+    def call(self, x, training=True):
+        x = self.model(x, training=training)
+
+        return x
