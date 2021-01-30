@@ -60,3 +60,14 @@ class Discriminator_64(Layer):
         cond_logit = self.cond_logit_conv(h_c_code)
 
         return uncond_logit, cond_logit
+
+class Discriminator_128(Layer):
+    def __init__(self, channels, name='Discriminator_128'):
+        super(Discriminator_128, self).__init__(name=name)
+        self.channels = channels
+
+        self.uncond_logit_conv = Conv(channels=1, kernel=4, stride=4,
+                                      use_bias=True, name='uncond_d_logit')
+        self.cond_logit_conv = Conv(channels=1, kernel=4, stride=4,
+                                    use_bias=True, name='cond_d_logit')
+        self.model, self.code_block = self.architecture()
