@@ -3,7 +3,7 @@
 # MIT License
 
 from tensorflow.keras import Model, Sequential
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer, Reshape
 from tensorflow.keras.applications.inception_v3 import (preprocess_input,
                                                         InceptionV3)
 from tensorflow import (image, equal, reshape, expand_dims, squeeze,
@@ -12,7 +12,8 @@ from tensorflow import (image, equal, reshape, expand_dims, squeeze,
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
-from network.utils import DropOut, Relu, BatchNorm, GLU, nearest_up_sample
+from network.utils import (DropOut, Relu, BatchNorm, GLU, nearest_up_sample,
+                           Tanh)
 from network.loss import reparametrize
 
 class CnnEncoder(Model):
@@ -182,3 +183,26 @@ class Generator_64(Layer):
         self.channels = channels
 
         self.model, self.generate_img_block = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [FullyConnected(units=self.channels * 4 * 4 * 2,
+                                 use_bias=False, name='code_fc')]
+        model += [BatchNorm(name='batch_norm')]
+        model += [GLU()]
+        model += [Reshape(target_shape=[4, 4, self.channels])]
+
+        for i in range(4):
+            model += [UpBlock(self.channels // 2, name='up_block_' + str(i))]
+            self.channels = self.channels // 2
+
+        model = Sequential(model)
+
+        generate_img_block = []
+        generate_img_block += [Conv(channels=3, kernel=3, stride=1, pad=1,
+                                    pad_type='reflect', use_bias=False,
+                                    name='g_64_logit')]
+        generate_img_block += [Tanh()]
+        generate_img_block = Sequential(generate_img_block)
+
+        return model, generate_img_block
