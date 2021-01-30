@@ -206,3 +206,9 @@ class Generator_64(Layer):
         generate_img_block = Sequential(generate_img_block)
 
         return model, generate_img_block
+
+    def call(self, c_z_code, training=True, mask=None):
+        h_code = self.model(c_z_code, training=training)
+        x = self.generate_img_block(h_code, training=training)
+
+        return h_code, x
