@@ -9,7 +9,7 @@ from tensorflow import image, equal
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
-from network.utils import DropOut
+from network.utils import DropOut, Relu
 
 class CnnEncoder(Model):
     def __init__(self, embed_dim, name='CnnEncoder'):
@@ -86,3 +86,11 @@ class CA_NET(Model):
         self.c_dim = c_dim
 
         self.model = self.architecture()
+
+    def architecture(self):
+        model = []
+        model += [FullyConnected(units=self.c_dim * 2, name='mu_fc')]
+        model += [Relu()]
+        model = Sequential(model)
+
+        return model
