@@ -272,3 +272,13 @@ class Generator_256(Layer):
         model = Sequential(model)
 
         return model
+
+    def call(self, inputs, training=True):
+        h_code, c_code, word_emb, mask = inputs
+        c_code, _ = self.spatial_attention([h_code, c_code, word_emb, mask])
+
+        h_c_code = concat([h_code, c_code], axis=-1)
+
+        x = self.model(h_c_code, training=training)
+
+        return x
