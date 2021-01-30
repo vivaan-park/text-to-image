@@ -291,3 +291,16 @@ class Generator(Model):
         self.g_64 = Generator_64(self.channels * 16, name='g_64')
         self.g_128 = Generator_128(self.channels, name='g_128')
         self.g_256 = Generator_256(self.channels, name='g_256')
+
+    def call(self, inputs, training=True, mask=None):
+        c_code, z_code, word_emb, mask = inputs
+        c_z_code = concat([c_code, z_code], axis=-1)
+
+        h_code1, x_64 = self.g_64(c_z_code, training=training)
+        c_code, h_code2, x_128 = self.g_128([h_code1, c_code, word_emb, mask],
+                                            training=training)
+        x_256 = self.g_256([h_code2, c_code, word_emb, mask], training=training)
+
+        x = [x_64, x_128, x_256]
+
+        return x
