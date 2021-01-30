@@ -8,7 +8,7 @@ from tensorflow.keras.applications.inception_v3 import (preprocess_input,
                                                         InceptionV3)
 from tensorflow import (image, equal, reshape, expand_dims, squeeze,
                         matmul, tile, where, constant, float32, nn,
-                        transpose)
+                        transpose, concat)
 
 from network.layers import Conv, FullyConnected
 from network.nlp import VariousRNN, EmbedSequence
@@ -239,3 +239,14 @@ class Generator_128(Layer):
         generate_img_block = Sequential(generate_img_block)
 
         return model, generate_img_block
+
+    def call(self, inputs, training=True):
+        h_code, c_code, word_emb, mask = inputs
+        c_code, _ = self.spatial_attention([h_code, c_code, word_emb, mask])
+
+        h_c_code = concat([h_code, c_code], axis=-1)
+
+        h_code = self.model(h_c_code, training=training)
+        x = self.generate_img_block(h_code)
+
+        return c_code, h_code, x
