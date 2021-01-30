@@ -8,7 +8,7 @@ from tensorflow import (nn, function, reduce_mean, square, math, transpose,
                         zeros_like, ones_like, expand_dims, matmul, tile,
                         reshape, exp, reduce_sum, cast, int32, concat,
                         float32, where, equal, constant, norm, squeeze,
-                        clip_by_value)
+                        clip_by_value, random, shape)
 import numpy as np
 
 ##############################################################################
@@ -250,3 +250,12 @@ def sent_loss(img_feature, sent_emb, class_id, gamma3=10.0):
     loss = loss0 + loss1
 
     return loss
+
+##############################################################################
+# KL-Divergence Loss Function
+##############################################################################
+
+def reparametrize(mean, logvar):
+    eps = random.normal(shape(mean), mean=0.0, stddev=1.0, dtype=float32)
+
+    return mean + exp(logvar * 0.5) * eps
