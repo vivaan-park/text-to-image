@@ -79,3 +79,10 @@ class RnnEncoder(Model):
         mask = equal(caption, 0)
 
         return word_emb, sent_emb, mask
+
+class CA_NET(Model):
+    def __init__(self, c_dim, name='CA_NET'):
+        super(CA_NET, self).__init__(name=name)
+        self.c_dim = c_dim
+
+        self.model = self.architecture()
