@@ -258,3 +258,17 @@ class Generator_256(Layer):
 
         self.spatial_attention = SpatialAttention(channels=self.channels)
         self.model = self.architecture()
+
+    def architecture(self):
+        model = []
+        for i in range(2):
+            model += [ResBlock(self.channels * 2, name='res_block_' + str(i))]
+
+        model += [UpBlock(self.channels, name='up_block')]
+        model += [Conv(channels=3, kernel=3, stride=1, pad=1,
+                       pad_type='reflect', use_bias=False,
+                       name='g_256_logit')]
+        model += [Tanh()]
+        model = Sequential(model)
+
+        return model
