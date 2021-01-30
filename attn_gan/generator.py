@@ -152,3 +152,10 @@ class SpatialAttention(Layer):
         word_attn = reshape(attn, shape=[self.bs, self.h, self.w, -1])
 
         return weighted_context, word_attn
+
+class UpBlock(Layer):
+    def __init__(self, channels, name='UpBlock'):
+        super(UpBlock, self).__init__(name=name)
+        self.channels = channels
+
+        self.model = self.architecture()
