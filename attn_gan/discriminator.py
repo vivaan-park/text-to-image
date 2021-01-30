@@ -3,7 +3,7 @@
 # MIT License
 
 from tensorflow.keras.layers import Layer
-from tensorflow.keras import Sequential
+from tensorflow.keras import Sequential, Model
 from tensorflow import concat
 
 from network.layers import Conv
@@ -182,3 +182,13 @@ class Discriminator_256(Layer):
         cond_logit = self.cond_logit_conv(h_c_code)
 
         return uncond_logit, cond_logit
+
+class Discriminator(Model):
+    def __init__(self, channels, embed_dim, name='Discriminator'):
+        super(Discriminator, self).__init__(name=name)
+        self.channels = channels
+        self.embed_dim = embed_dim
+
+        self.d_64 = Discriminator_64(self.channels, name='d_64')
+        self.d_128 = Discriminator_128(self.channels, name='d_128')
+        self.d_256 = Discriminator_256(self.channels, name='d_256')
