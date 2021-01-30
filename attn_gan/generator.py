@@ -175,3 +175,10 @@ class UpBlock(Layer):
         x = self.model(x, training=training)
 
         return x
+
+class Generator_64(Layer):
+    def __init__(self, channels, name='Generator_64'):
+        super(Generator_64, self).__init__(name=name)
+        self.channels = channels
+
+        self.model, self.generate_img_block = self.architecture()
