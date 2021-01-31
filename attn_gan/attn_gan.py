@@ -4,7 +4,7 @@
 
 import os
 
-from tensorflow import data
+from tensorflow import (data, GradientTape, random, int32, gather)
 from tensorflow.python.data.experimental import (prefetch_to_device,
                                                  shuffle_and_repeat,
                                                  map_and_batch)
@@ -15,6 +15,7 @@ from utils.others import check_folder
 from data.preprocess import Image_data
 from attn_gan.generator import (RnnEncoder, CnnEncoder, CA_NET, Generator)
 from attn_gan.discriminator import Discriminator
+from network.loss import word_loss, sent_loss
 
 class AttnGAN():
     def __init__(self, args):
@@ -191,3 +192,33 @@ class AttnGAN():
                 print('start iteration : ', self.start_iteration)
             else:
                 print('Not restoring from saved checkpoint')
+
+    def embed_train_step(self, real_256, caption, class_id):
+        with GradientTape() as embed_tape:
+            target_sentence_index = random.uniform(
+                shape=[], minval=0, maxval=10, dtype=int32
+            )
+            caption = gather(caption, target_sentence_index, axis=1)
+
+            word_feature, sent_code = self.cnn_encoder(
+                real_256, training=True
+            )
+            word_emb, sent_emb, mask = self.rnn_encoder(
+                caption, training=True
+            )
+
+            w_loss = word_loss(word_feature, word_emb, class_id)
+            s_loss = sent_loss(sent_code, sent_emb, class_id)
+
+            embed_loss = self.embed_weight * (w_loss + s_loss)
+
+        embed_train_variable = self.cnn_encoder.trainable_variables + \
+                               self.rnn_encoder.trainable_variables
+        embed_gradient = embed_tape.gradient(
+            embed_loss, embed_train_variable
+        )
+        self.embed_optimizer.apply_gradients(
+            zip(embed_gradient, embed_train_variable)
+        )
+
+        return embed_loss
