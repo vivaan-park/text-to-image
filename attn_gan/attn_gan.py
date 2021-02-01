@@ -3,17 +3,19 @@
 # MIT License
 
 import os
+import time
 
 from tensorflow import (data, GradientTape, random, int32, gather, image,
-                        reduce_sum)
+                        reduce_sum, summary)
 from tensorflow.python.data.experimental import (prefetch_to_device,
                                                  shuffle_and_repeat,
                                                  map_and_batch)
 from tensorflow.keras.optimizers import Adam
 from tensorflow import train as tf_train
+import numpy as np
 
 from utils.others import check_folder
-from data.preprocess import Image_data
+from data.preprocess import Image_data, return_images, save_images
 from attn_gan.generator import (RnnEncoder, CnnEncoder, CA_NET, Generator)
 from attn_gan.discriminator import Discriminator
 from network.loss import (word_loss, sent_loss, discriminator_loss,
@@ -75,7 +77,7 @@ class AttnGAN():
         self.idx_to_word = idx_to_word
         self.word_to_idx = word_to_idx
 
-        if self.phase == 'train' :
+        if self.phase == 'train':
             self.dataset_num = len(train_images)
 
             img_and_caption = data.Dataset.from_tensor_slices(
@@ -109,7 +111,6 @@ class AttnGAN():
                 channels=self.d_dim, embed_dim=self.embed_dim
             )
 
-            """ Optimizer """
             self.g_optimizer = Adam(learning_rate=self.init_lr, beta_1=0.5,
                                     beta_2=0.999, epsilon=1e-08)
 
@@ -152,7 +153,7 @@ class AttnGAN():
                 print('start iteration :', self.start_iteration)
             else:
                 print('Not restoring from saved checkpoint')
-        else :
+        else:
             self.dataset_num = len(test_captions)
 
             gpu_device = '/gpu:0'
@@ -191,7 +192,7 @@ class AttnGAN():
                     self.manager.latest_checkpoint
                 ).expect_partial()
                 print('Latest checkpoint restored!!')
-                print('start iteration : ', self.start_iteration)
+                print('start iteration :', self.start_iteration)
             else:
                 print('Not restoring from saved checkpoint')
 
@@ -227,7 +228,7 @@ class AttnGAN():
 
     def d_train_step(self, real_256, caption):
         with GradientTape() as d_64_tape, GradientTape() as d_128_tape,\
-                GradientTape() as d_256_tape :
+                GradientTape() as d_256_tape:
             target_sentence_index = random.uniform(shape=[], minval=0,
                                                    maxval=10, dtype=int32)
             caption = gather(caption, target_sentence_index, axis=1)
@@ -346,3 +347,69 @@ class AttnGAN():
         self.g_optimizer.apply_gradients(zip(g_gradient, g_train_variable))
 
         return g_loss, g_adv_loss, g_kl_loss, g_embed_loss, fake_256
+
+    def train(self):
+        start_time = time.time()
+
+        train_summary_writer = summary.create_file_writer(
+            os.path.join(self.log_dir, self.model_dir)
+        )
+
+        for idx in range(self.start_iteration, self.iteration):
+            if self.decay_flag:
+                decay_start_step = self.decay_iter
+
+                if idx > 0 and (idx % decay_start_step) == 0:
+                    lr = self.init_lr * pow(0.5, idx // decay_start_step)
+                    self.g_optimizer.learning_rate = lr
+                    for i in range(3):
+                        self.d_optimizer[i].learning_rate = lr
+                    self.embed_optimizer.learning_rate = lr
+
+            real_256, caption, class_id = next(self.img_caption_iter)
+
+            embed_loss = self.embed_train_step(real_256, caption, class_id)
+
+            d_loss, d_adv_loss = self.d_train_step(real_256, caption)
+
+            g_loss, g_adv_loss, g_kl_loss, g_embed_loss, fake_256 = \
+                self.g_train_step(caption, class_id)
+            g_loss += embed_loss
+
+            with train_summary_writer.as_default():
+                summary.scalar('g_adv_loss', g_adv_loss, step=idx)
+                summary.scalar('g_kl_loss', g_kl_loss, step=idx)
+                summary.scalar('g_embed_loss', g_embed_loss, step=idx)
+                summary.scalar('g_loss', g_loss, step=idx)
+
+                summary.scalar('embed_loss', embed_loss, step=idx)
+
+                summary.scalar('d_adv_loss', d_adv_loss, step=idx)
+                summary.scalar('d_loss', d_loss, step=idx)
+
+            if np.mod(idx + 1, self.save_freq) == 0:
+                self.manager.save(checkpoint_number=idx + 1)
+
+            if np.mod(idx + 1, self.print_freq) == 0:
+                real_images = real_256[:5]
+                fake_images = fake_256[:5]
+
+                merge_real_images = np.expand_dims(
+                    return_images(real_images, [5, 1]), axis=0
+                )
+                merge_fake_images = np.expand_dims(
+                    return_images(fake_images, [5, 1]), axis=0
+                )
+
+                merge_images = np.concatenate(
+                    [merge_real_images, merge_fake_images], axis=0
+                )
+
+                save_images(merge_images, [1, 2],
+                            f'./{self.sample_dir}/merge_{idx+1:07d}.jpg')
+
+            print(f'Iteration: [{idx:6d}/{self.iteration:6d}] '
+                  f'time: {time.time() - start_time:4.4f} '
+                  f'd_loss: {d_loss:.8f}, g_loss: {g_loss:8f}')
+
+        self.manager.save(checkpoint_number=self.iteration)
