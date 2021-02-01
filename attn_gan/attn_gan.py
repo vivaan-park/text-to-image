@@ -16,7 +16,8 @@ from utils.others import check_folder
 from data.preprocess import Image_data
 from attn_gan.generator import (RnnEncoder, CnnEncoder, CA_NET, Generator)
 from attn_gan.discriminator import Discriminator
-from network.loss import word_loss, sent_loss, discriminator_loss
+from network.loss import (word_loss, sent_loss, discriminator_loss,
+                          generator_loss, kl_loss)
 
 class AttnGAN():
     def __init__(self, args):
@@ -299,3 +300,49 @@ class AttnGAN():
             )
 
         return d_loss, reduce_sum(d_adv_loss)
+
+    def g_train_step(self, caption, class_id):
+        with GradientTape() as g_tape:
+            target_sentence_index = random.uniform(shape=[], minval=0,
+                                                   maxval=10, dtype=int32)
+            caption = gather(caption, target_sentence_index, axis=1)
+
+            word_emb, sent_emb, mask = self.rnn_encoder(
+                caption, training=True
+            )
+
+            z_code = random.normal(shape=[self.batch_size, self.z_dim])
+            c_code, mu, logvar = self.ca_net(sent_emb, training=True)
+
+            fake_imgs = self.generator([c_code, z_code, word_emb, mask],
+                                       training=True)
+            fake_64, fake_128, fake_256 = fake_imgs
+
+            uncond_fake_logits, cond_fake_logits = \
+                self.discriminator([fake_64, fake_128, fake_256, sent_emb],
+                                   training=True)
+
+            g_adv_loss = 0
+
+            for i in range(3):
+                g_adv_loss += self.adv_weight * \
+                              (generator_loss(self.gan_type, uncond_fake_logits[i]) +
+                               generator_loss(self.gan_type, cond_fake_logits[i]))
+
+            word_feature, sent_code = self.cnn_encoder(fake_256, training=True)
+
+            w_loss = word_loss(word_feature, word_emb, class_id)
+            s_loss = sent_loss(sent_code, sent_emb, class_id)
+
+            g_embed_loss = self.embed_weight * (w_loss + s_loss) * 5.0
+
+            g_kl_loss = self.kl_weight * kl_loss(mu, logvar)
+
+            g_loss = g_adv_loss + g_kl_loss + g_embed_loss
+
+        g_train_variable = self.generator.trainable_variables + \
+                           self.ca_net.trainable_variables
+        g_gradient = g_tape.gradient(g_loss, g_train_variable)
+        self.g_optimizer.apply_gradients(zip(g_gradient, g_train_variable))
+
+        return g_loss, g_adv_loss, g_kl_loss, g_embed_loss, fake_256
