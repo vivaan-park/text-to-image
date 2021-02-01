@@ -413,3 +413,14 @@ class AttnGAN():
                   f'd_loss: {d_loss:.8f}, g_loss: {g_loss:8f}')
 
         self.manager.save(checkpoint_number=self.iteration)
+
+    @property
+    def model_dir(self):
+        if self.sn:
+            sn = '_sn'
+        else:
+            sn = ''
+
+        return f'{self.model_name}_{self.dataset_name}_{self.gan_type}_' \
+               f'{self.adv_weight}adv_{self.kl_weight}kl_{self.embed_weight}' \
+               f'embed{sn}'
