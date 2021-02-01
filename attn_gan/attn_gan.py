@@ -239,9 +239,9 @@ class AttnGAN():
             fake_imgs = self.generator([c_code, z_code, word_emb, mask],
                                        training=True)
 
-            real_64 = image.resize(real_256, target_size=[64, 64],
+            real_64 = image.resize(real_256, size=[64, 64],
                                    method=image.ResizeMethod.BILINEAR)
-            real_128 = image.resize(real_256, target_size=[128, 128],
+            real_128 = image.resize(real_256, size=[128, 128],
                                     method=image.ResizeMethod.BILINEAR)
             fake_64, fake_128, fake_256 = fake_imgs
 
