@@ -21,12 +21,11 @@ class Image_data:
         self.dataset_path = dataset_path
         self.image_path = os.path.join(dataset_path, 'images')
         self.text_path = os.path.join(dataset_path, 'texts')
-        self.pickle_path = os.path.join(dataset_path, 'pickles')
 
         self.train_image_filename_pickle = \
-            os.path.join(self.pickle_path, 'filenames_train.pickle')
+            os.path.join(self.text_path, 'filenames_train.pickle')
         self.test_image_filename_pickle = \
-            os.path.join(self.pickle_path, 'filenames_test.pickle')
+            os.path.join(self.text_path, 'filenames_test.pickle')
         self.caption_pickle = \
             os.path.join(self.text_path, 'captions.pickle')
         self.class_info_pickle = \
