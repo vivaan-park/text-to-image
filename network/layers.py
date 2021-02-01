@@ -83,7 +83,7 @@ class FullyConnected(Layer):
                             use_bias=self.use_bias, name=self.name)
 
     def call(self, x, training=None, mask=None):
-        x = Flatten(x)
+        x = Flatten()(x)
         x = self.fc(x)
 
         return x
