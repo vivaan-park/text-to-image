@@ -23,14 +23,12 @@ from network.loss import (word_loss, sent_loss, discriminator_loss,
 
 class AttnGAN():
     def __init__(self, args):
-
         self.phase = args.phase
         self.model_name = 'AttnGAN'
 
         self.checkpoint_dir = args.checkpoint_dir
         self.result_dir = args.result_dir
         self.log_dir = args.log_dir
-        self.dataset_name = args.dataset
         self.augment_flag = args.augment_flag
 
         self.iteration = args.iteration
@@ -64,7 +62,7 @@ class AttnGAN():
         self.sample_dir = os.path.join(args.sample_dir, self.model_dir)
         check_folder(self.sample_dir)
 
-        self.dataset_path = os.path.join('./dataset', self.dataset_name)
+        self.dataset_path = './data'
 
     def build_model(self):
         img_data_class = Image_data(self.img_height, self.img_width,
@@ -421,9 +419,8 @@ class AttnGAN():
         else:
             sn = ''
 
-        return f'{self.model_name}_{self.dataset_name}_{self.gan_type}_' \
-               f'{self.adv_weight}adv_{self.kl_weight}kl_{self.embed_weight}' \
-               f'embed{sn}'
+        return f'{self.model_name}_{self.gan_type}_{self.adv_weight}adv' \
+               f'_{self.kl_weight}kl_{self.embed_weight}embed{sn}'
 
     def test(self):
         self.result_dir = os.path.join(self.result_dir, self.model_dir)
