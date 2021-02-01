@@ -424,3 +424,44 @@ class AttnGAN():
         return f'{self.model_name}_{self.dataset_name}_{self.gan_type}_' \
                f'{self.adv_weight}adv_{self.kl_weight}kl_{self.embed_weight}' \
                f'embed{sn}'
+
+    def test(self):
+        self.result_dir = os.path.join(self.result_dir, self.model_dir)
+        check_folder(self.result_dir)
+
+        index_path = os.path.join(self.result_dir, 'index.html')
+        index = open(index_path, 'w')
+        index.write('<html><body><table><tr>')
+        index.write('<th>name</th><th>input</th><th>output</th></tr>')
+
+        real_256, caption = next(self.img_caption_iter)
+        target_sentence_index = random.uniform(shape=[], minval=0,
+                                               maxval=10, dtype=int32)
+        caption = gather(caption, target_sentence_index, axis=1)
+
+        word_emb, sent_emb, mask = self.rnn_encoder(caption, training=False)
+
+        z = random.normal(shape=[self.batch_size, self.z_dim])
+        fake_imgs, _, _ = self.generator([z, sent_emb, word_emb, mask],
+                                         training=False)
+
+        fake_256 = fake_imgs[-1]
+
+        for i in range(5) :
+            real_path = os.path.join(self.result_dir, f'real_{i}.jpg')
+            fake_path = os.path.join(self.result_dir, f'fake_{i}.jpg')
+
+            real_image = np.expand_dims(real_256[i], axis=0)
+            fake_image = np.expand_dims(fake_256[i], axis=0)
+
+            save_images(real_image, [1, 1], real_path)
+            save_images(fake_image, [1, 1], fake_path)
+
+            index.write(f'<td>{os.path.basename(real_path)}</td>')
+            index.write(f"<td><img src='{real_path if os.path.isabs(real_path) else ('../..' + os.path.sep + real_path)}' "
+                        f"width='{self.img_width}' height='{self.img_height}'></td>")
+            index.write(f"<td><img src='{fake_path if os.path.isabs(fake_path) else ('../..' + os.path.sep + fake_path)}' "
+                        f"width='{self.img_width}' height='{self.img_height}'></td>")
+            index.write(f'</tr>')
+
+        index.close()
