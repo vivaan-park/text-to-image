@@ -4,7 +4,8 @@
 
 import os
 
-from tensorflow import (data, GradientTape, random, int32, gather)
+from tensorflow import (data, GradientTape, random, int32, gather, image,
+                        reduce_sum)
 from tensorflow.python.data.experimental import (prefetch_to_device,
                                                  shuffle_and_repeat,
                                                  map_and_batch)
@@ -15,7 +16,7 @@ from utils.others import check_folder
 from data.preprocess import Image_data
 from attn_gan.generator import (RnnEncoder, CnnEncoder, CA_NET, Generator)
 from attn_gan.discriminator import Discriminator
-from network.loss import word_loss, sent_loss
+from network.loss import word_loss, sent_loss, discriminator_loss
 
 class AttnGAN():
     def __init__(self, args):
@@ -222,3 +223,79 @@ class AttnGAN():
         )
 
         return embed_loss
+
+    def d_train_step(self, real_256, caption):
+        with GradientTape() as d_64_tape, GradientTape() as d_128_tape,\
+                GradientTape() as d_256_tape :
+            target_sentence_index = random.uniform(shape=[], minval=0,
+                                                   maxval=10, dtype=int32)
+            caption = gather(caption, target_sentence_index, axis=1)
+
+            word_emb, sent_emb, mask = self.rnn_encoder(
+                caption, training=True
+            )
+            z_code = random.normal(shape=[self.batch_size, self.z_dim])
+            c_code, mu, logvar = self.ca_net(sent_emb, training=True)
+            fake_imgs = self.generator([c_code, z_code, word_emb, mask],
+                                       training=True)
+
+            real_64 = image.resize(real_256, target_size=[64, 64],
+                                   method=image.ResizeMethod.BILINEAR)
+            real_128 = image.resize(real_256, target_size=[128, 128],
+                                    method=image.ResizeMethod.BILINEAR)
+            fake_64, fake_128, fake_256 = fake_imgs
+
+            uncond_real_logits, cond_real_logits = \
+                self.discriminator([real_64, real_128, real_256, sent_emb],
+                                   training=True)
+            _, cond_wrong_logits = self.discriminator(
+                [real_64[:(self.batch_size - 1)],
+                 real_128[:(self.batch_size - 1)],
+                 real_256[:(self.batch_size - 1)],
+                 sent_emb[1:self.batch_size]]
+            )
+            uncond_fake_logits, cond_fake_logits = self.discriminator(
+                [fake_64, fake_128, fake_256, sent_emb], training=True
+            )
+
+            d_adv_loss = []
+
+            for i in range(3):
+                uncond_real_loss, uncond_fake_loss = discriminator_loss(
+                    self.gan_type,
+                    uncond_real_logits[i],
+                    uncond_fake_logits[i]
+                )
+                cond_real_loss, cond_fake_loss = discriminator_loss(
+                    self.gan_type,
+                    cond_real_logits[i],
+                    cond_fake_logits[i]
+                )
+                _, cond_wrong_loss = discriminator_loss(
+                    self.gan_type,
+                    None,
+                    cond_wrong_logits[i]
+                )
+
+                each_d_adv_loss = self.adv_weight * (
+                        ((uncond_real_loss + cond_real_loss) / 2) +
+                        (uncond_fake_loss + cond_fake_loss + cond_wrong_loss) / 3
+                )
+                d_adv_loss.append(each_d_adv_loss)
+
+            d_loss = reduce_sum(d_adv_loss)
+
+        d_train_variable = [self.discriminator.d_64.trainable_variables,
+                            self.discriminator.d_128.trainable_variables,
+                            self.discriminator.d_256.trainable_variables]
+        d_tape = [d_64_tape, d_128_tape, d_256_tape]
+
+        for i in range(3):
+            d_gradient = d_tape[i].gradient(
+                d_adv_loss[i], d_train_variable[i]
+            )
+            self.d_optimizer[i].apply_gradients(
+                zip(d_gradient, d_train_variable[i])
+            )
+
+        return d_loss, reduce_sum(d_adv_loss)
