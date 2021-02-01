@@ -259,3 +259,10 @@ def reparametrize(mean, logvar):
     eps = random.normal(shape(mean), mean=0.0, stddev=1.0, dtype=float32)
 
     return mean + exp(logvar * 0.5) * eps
+
+@function
+def kl_loss(mean, logvar):
+    loss = 0.5 * reduce_sum(square(mean) + exp(logvar) - 1 - logvar, axis=-1)
+    loss = reduce_mean(loss)
+
+    return loss
