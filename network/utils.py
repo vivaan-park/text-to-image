@@ -11,7 +11,7 @@ from tensorflow import (initializers, float32, VariableAggregation,
 from tensorflow.keras.activations import relu, tanh
 
 ##############################################################################
-# Class function
+# Spectral Normalization
 ##############################################################################
 
 class SpectralNormalization(Wrapper):
