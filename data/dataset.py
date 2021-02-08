@@ -5,8 +5,11 @@
 import os
 import pickle
 from collections import defaultdict
+import argparse
 
 from khaiii import KhaiiiApi
+
+from utils.others import check_folder
 
 API = KhaiiiApi()
 
@@ -95,6 +98,8 @@ def build_dictionary(train_captions, test_captions):
             idxtoword, wordtoidx, len(idxtoword)]
 
 def generate_captions(data_dir):
+    check_folder(data_dir)
+
     filepath = os.path.join(data_dir, 'captions.pickle')
     train_names = load_filenames(data_dir, 'train')
     test_names = load_filenames(data_dir, 'test')
@@ -108,3 +113,15 @@ def generate_captions(data_dir):
             pickle.dump([train_captions, test_captions,
                          idxtoword, wordtoidx], f)
             print('Save to:', filepath)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, default='texts')
+
+    args = parser.parse_args()
+
+    generate_captions(args.data_dir)
+
+
+if __name__ == '__main__':
+    main()
