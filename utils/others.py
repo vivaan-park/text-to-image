@@ -6,10 +6,9 @@ import os
 
 from tensorflow import config
 
-def check_folder(log_dir):
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    return log_dir
+def check_folder(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
 def str2bool(x):
     return x.lower() in ('true')
