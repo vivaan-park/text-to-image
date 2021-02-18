@@ -5,6 +5,7 @@
 import argparse
 
 from utils.others import check_folder, str2bool
+from attn_gan import AttnGAN
 
 def check_args(args):
     check_folder(args.checkpoint_dir)
@@ -71,7 +72,7 @@ def parse_args():
     parser.add_argument('--augment_flag', type=str2bool, default=False,
                         help='Image augmentation use or not')
 
-    parser.add_argument('--checkpoint_dir', type=str, default='checkpoint',
+    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints',
                         help='Directory name to save the checkpoints')
     parser.add_argument('--result_dir', type=str, default='results',
                         help='Directory name to save the generated images')
@@ -81,3 +82,21 @@ def parse_args():
                         help='Directory name to save the samples on training')
 
     return check_args(parser.parse_args())
+
+def main():
+    args = parse_args()
+
+    gan = AttnGAN(args)
+    gan.build_model()
+
+    if args.phase == 'train':
+        gan.train()
+        print(' [*] Training finished!')
+
+    if args.phase == 'test':
+        gan.test()
+        print(' [*] Test finished!')
+
+
+if __name__ == '__main__':
+    main()
