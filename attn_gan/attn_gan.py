@@ -84,14 +84,12 @@ class AttnGAN():
 
             gpu_device = '/gpu:0'
             img_and_caption = img_and_caption.apply(
-                shuffle_and_repeat(self.dataset_num)
-            ).apply(
-                map_and_batch(
-                    img_data_class.image_processing,
-                    batch_size=self.batch_size,
-                    num_parallel_batches=16,
-                    drop_remainder=True)
-            ).apply(prefetch_to_device(gpu_device, None))
+                shuffle_and_repeat(self.dataset_num)).apply(
+                map_and_batch(img_data_class.image_processing,
+                              batch_size=self.batch_size,
+                              num_parallel_batches=16,
+                              drop_remainder=True)).apply(
+                prefetch_to_device(gpu_device, None))
 
             self.img_caption_iter = iter(img_and_caption)
 
