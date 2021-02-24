@@ -108,23 +108,23 @@ class GLU(Layer):
         if self.n_dim == 2:
             return x[:, :nc] * sigmoid(x[:, nc:])
 
-def Leaky_Relu(x=None, alpha=0.01, name='leaky_relu'):
+def Leaky_Relu(x=None, alpha=0.01):
     if x is None:
-        return LeakyReLU(alpha=alpha, name=name)
+        return LeakyReLU(alpha=alpha)
     else:
-        return LeakyReLU(alpha=alpha, name=name)(x)
+        return LeakyReLU(alpha=alpha)(x)
 
-def Relu(x=None, name='relu'):
+def Relu(x=None):
     if x is None:
-        return Activation(relu, name=name)
+        return Activation(relu)
     else:
-        return Activation(relu, name=name)(x)
+        return Activation(relu)(x)
 
-def Tanh(x=None, name='tanh'):
+def Tanh(x=None):
     if x is None:
-        return Activation(tanh, name=name)
+        return Activation(tanh)
     else:
-        return Activation(tanh, name=name)(x)
+        return Activation(tanh)(x)
 
 ##############################################################################
 # Pooling
