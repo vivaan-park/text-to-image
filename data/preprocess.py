@@ -11,14 +11,13 @@ import numpy as np
 import cv2
 
 class Image_data:
-    def __init__(self, img_height, img_width, channels,
-                 dataset_path, augment_flag):
+    def __init__(self, img_height, img_width, channels, augment_flag):
         self.img_height = img_height
         self.img_width = img_width
         self.channels = channels
         self.augment_flag = augment_flag
 
-        self.dataset_path = dataset_path
+        dataset_path = os.path.dirname(__file__)
         self.image_path = os.path.join(dataset_path, 'images')
         self.text_path = os.path.join(dataset_path, 'texts')
 

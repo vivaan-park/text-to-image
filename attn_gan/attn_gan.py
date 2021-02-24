@@ -62,12 +62,9 @@ class AttnGAN():
         self.sample_dir = os.path.join(args.sample_dir, self.model_dir)
         check_folder(self.sample_dir)
 
-        self.dataset_path = './data'
-
     def build_model(self):
         img_data_class = Image_data(self.img_height, self.img_width,
-                                    self.img_ch, self.dataset_path,
-                                    self.augment_flag)
+                                    self.img_ch, self.augment_flag)
         train_class_id, train_captions, train_images,\
         test_captions, test_images, idx_to_word, word_to_idx = \
             img_data_class.preprocess()
@@ -150,13 +147,13 @@ class AttnGAN():
             else:
                 print('Not restoring from saved checkpoint')
         else:
-            self.dataset_num = len(test_captions)
+            self.dataset_num = len(test_images)
 
-            gpu_device = '/gpu:0'
             img_and_caption = data.Dataset.from_tensor_slices(
                 (test_images, test_captions)
             )
 
+            gpu_device = '/gpu:0'
             img_and_caption = img_and_caption.apply(
                 shuffle_and_repeat(self.dataset_num)).apply(
                 map_and_batch(img_data_class.image_processing,
