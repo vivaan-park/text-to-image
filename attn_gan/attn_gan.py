@@ -7,9 +7,7 @@ import time
 
 from tensorflow import (data, GradientTape, random, int32, gather, image,
                         reduce_sum, summary)
-from tensorflow.python.data.experimental import (prefetch_to_device,
-                                                 shuffle_and_repeat,
-                                                 map_and_batch)
+from tensorflow.python.data.experimental import shuffle_and_repeat, map_and_batch
 from tensorflow.keras.optimizers import Adam
 from tensorflow import train as tf_train
 import numpy as np
@@ -79,14 +77,12 @@ class AttnGAN():
                 (train_images, train_captions, train_class_id)
             )
 
-            gpu_device = '/gpu:0'
             img_and_caption = img_and_caption.apply(
                 shuffle_and_repeat(self.dataset_num)).apply(
                 map_and_batch(img_data_class.image_processing,
                               batch_size=self.batch_size,
                               num_parallel_batches=16,
-                              drop_remainder=True)).apply(
-                prefetch_to_device(gpu_device, None))
+                              drop_remainder=True))
 
             self.img_caption_iter = iter(img_and_caption)
 
@@ -153,14 +149,12 @@ class AttnGAN():
                 (test_images, test_captions)
             )
 
-            gpu_device = '/gpu:0'
             img_and_caption = img_and_caption.apply(
                 shuffle_and_repeat(self.dataset_num)).apply(
                 map_and_batch(img_data_class.image_processing,
                               batch_size=self.batch_size,
                               num_parallel_batches=16,
-                              drop_remainder=True)).apply(
-                prefetch_to_device(gpu_device, None))
+                              drop_remainder=True))
 
             self.img_caption_iter = iter(img_and_caption)
 
