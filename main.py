@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument('--embed_weight', type=int, default=1,
                         help='Weight about embed_weight')
 
-    parser.add_argument('--z_dim', type=int, default=100,
+    parser.add_argument('--z_dim', type=int, default=256,
                         help='condition & noise z dimension')
     parser.add_argument('--embed_dim', type=int, default=256,
                         help='embedding dimension')
