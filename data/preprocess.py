@@ -52,11 +52,11 @@ class Image_data:
             )
 
             img = cond(pred=condition,
-                          true_fn=lambda: augmentation(
-                              img, augment_height_size,
-                              augment_width_size, seed
-                          ),
-                          false_fn=lambda: img)
+                       true_fn=lambda: augmentation(
+                           img, augment_height_size,
+                           augment_width_size, seed
+                       ),
+                       false_fn=lambda: img)
 
         return img, captions, class_id
 
