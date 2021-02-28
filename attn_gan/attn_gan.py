@@ -27,6 +27,7 @@ class AttnGAN():
         self.checkpoint_dir = args.checkpoint_dir
         self.result_dir = args.result_dir
         self.log_dir = args.log_dir
+        self.valid_dir = args.valid_dir
         self.augment_flag = args.augment_flag
 
         self.iteration = args.iteration
@@ -142,7 +143,8 @@ class AttnGAN():
                 print('start iteration :', self.start_iteration)
             else:
                 print('Not restoring from saved checkpoint')
-        else:
+
+        if self.phase == 'test':
             self.dataset_num = len(test_images)
 
             img_and_caption = data.Dataset.from_tensor_slices(
@@ -172,14 +174,12 @@ class AttnGAN():
             self.manager = tf_train.CheckpointManager(
                 self.ckpt, self.checkpoint_dir, max_to_keep=2
             )
-            self.start_iteration = 0
 
             if self.manager.latest_checkpoint:
                 self.ckpt.restore(
                     self.manager.latest_checkpoint
                 ).expect_partial()
                 print('Latest checkpoint restored!!')
-                print('start iteration :', self.start_iteration)
             else:
                 print('Not restoring from saved checkpoint')
 
@@ -428,10 +428,8 @@ class AttnGAN():
         word_emb, sent_emb, mask = self.rnn_encoder(caption, training=False)
 
         z = random.normal(shape=[self.batch_size, self.z_dim])
-        fake_imgs, _, _ = self.generator([z, sent_emb, word_emb, mask],
-                                         training=False)
-
-        fake_256 = fake_imgs[-1]
+        fake_64, fake_128, fake_256 = \
+            self.generator([z, sent_emb, word_emb, mask], training=False)
 
         for i in range(5) :
             real_path = os.path.join(self.result_dir, f'real_{i}.jpg')

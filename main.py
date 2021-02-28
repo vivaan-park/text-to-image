@@ -80,6 +80,10 @@ def parse_args():
                         help='Directory name to save training logs')
     parser.add_argument('--sample_dir', type=str, default='samples',
                         help='Directory name to save the samples on training')
+    parser.add_argument('--valid_dir', type=str, default='validation',
+                        help='Directory name to save the validation')
+    parser.add_argument('--captions', type=str, default='captions.txt',
+                        help='Captions file path to validate')
 
     return check_args(parser.parse_args())
 
