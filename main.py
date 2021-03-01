@@ -22,7 +22,7 @@ def check_args(args):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--phase', type=str, default='train',
-                        choices=('train', 'test'), help='phase name')
+                        choices=('train', 'test', 'valid'), help='phase name')
 
     parser.add_argument('--iteration', type=int, default=1000000,
                         help='The number of training iterations')
