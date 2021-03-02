@@ -4,6 +4,7 @@
 
 import os
 import time
+from collections import defaultdict
 
 from tensorflow import (data, GradientTape, random, int32, gather, image,
                         reduce_sum, summary)
@@ -14,6 +15,7 @@ import numpy as np
 
 from utils.others import check_folder
 from data.preprocess import Image_data, return_images, save_images
+from data.dataset import tokenizer
 from attn_gan.generator import (RnnEncoder, CnnEncoder, CA_NET, Generator)
 from attn_gan.discriminator import Discriminator
 from network.loss import (word_loss, sent_loss, discriminator_loss,
@@ -60,6 +62,8 @@ class AttnGAN():
 
         self.sample_dir = os.path.join(args.sample_dir, self.model_dir)
         check_folder(self.sample_dir)
+
+        self.captions = args.captions
 
     def build_model(self):
         img_data_class = Image_data(self.img_height, self.img_width,
@@ -157,6 +161,85 @@ class AttnGAN():
                               batch_size=self.batch_size,
                               num_parallel_batches=16,
                               drop_remainder=True))
+
+            self.img_caption_iter = iter(img_and_caption)
+
+            self.rnn_encoder = RnnEncoder(
+                n_words=self.vocab_size, embed_dim=self.embed_dim,
+                drop_rate=0.5, n_hidden=128, n_layer=1,
+                bidirectional=True, rnn_type='lstm'
+            )
+            self.ca_net = CA_NET(c_dim=self.z_dim)
+            self.generator = Generator(channels=self.g_dim)
+
+            self.ckpt = tf_train.Checkpoint(rnn_encoder=self.rnn_encoder,
+                                            ca_net = self.ca_net,
+                                            generator=self.generator)
+            self.manager = tf_train.CheckpointManager(
+                self.ckpt, self.checkpoint_dir, max_to_keep=2
+            )
+
+            if self.manager.latest_checkpoint:
+                self.ckpt.restore(
+                    self.manager.latest_checkpoint
+                ).expect_partial()
+                print('Latest checkpoint restored!!')
+            else:
+                print('Not restoring from saved checkpoint')
+
+        if self.phase == 'valid':
+            from khaiii import KhaiiiApi
+
+            API = KhaiiiApi()
+
+            n_max_words = 18
+            all_captions = []
+            with open(self.captions, 'r', encoding='euc-kr') as f:
+                valid_captions = f.read().split('\n')
+                self.dataset_num = len(valid_captions)
+
+                for cap in valid_captions:
+                    morphs = API.analyze(cap)
+                    tokens = tokenizer(morphs)
+
+                    all_captions.append(tokens)
+
+            word_counts = defaultdict(float)
+            for cap in all_captions:
+                for word in cap:
+                    word_counts[word] += 1
+
+            vocab = [w for w in word_counts if word_counts[w] >= 0]
+
+            idxtoword = {}
+            idxtoword[0] = '<끝>'
+            wordtoidx = {}
+            wordtoidx['<끝>'] = 0
+            idx = 1
+            for word in vocab:
+                wordtoidx[word] = idx
+                idxtoword[idx] = word
+                idx += 1
+
+            self.captions_new = []
+            for cap in all_captions:
+                rev = []
+                for word in cap:
+                    if word in wordtoidx:
+                        rev.append(wordtoidx[word])
+                self.captions_new.append(rev)
+
+            for i in range(self.dataset_num):
+                self.captions_new[i] = self.captions_new[i][:n_max_words]
+                self.captions_new[i] = self.captions_new[i] + [2] * \
+                                       (n_max_words - len(self.captions_new[i]))
+
+            self.captions_new = np.reshape(
+                self.captions_new,
+                [-1, self.dataset_num, n_max_words]
+            )
+
+            img_and_caption = data.Dataset.from_tensor_slices(self.captions_new)
 
             self.img_caption_iter = iter(img_and_caption)
 
@@ -431,7 +514,7 @@ class AttnGAN():
         fake_64, fake_128, fake_256 = \
             self.generator([z, sent_emb, word_emb, mask], training=False)
 
-        for i in range(5) :
+        for i in range(5):
             real_path = os.path.join(self.result_dir, f'real_{i}.jpg')
             fake_path = os.path.join(self.result_dir, f'fake_{i}.jpg')
 
