@@ -101,6 +101,10 @@ def main():
         gan.test()
         print(' [*] Test finished!')
 
+    if args.phase == 'valid':
+        gan.validation()
+        print(' [*] Validation finished!')
+
 
 if __name__ == '__main__':
     main()
