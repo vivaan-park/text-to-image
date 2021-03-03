@@ -532,3 +532,20 @@ class AttnGAN():
             index.write(f'</tr>')
 
         index.close()
+
+    def validation(self):
+        self.valid_dir = os.path.join(self.valid_dir, self.model_dir)
+        check_folder(self.valid_dir)
+
+        caption = next(self.img_caption_iter)
+        word_emb, sent_emb, mask = self.rnn_encoder(caption, training=False)
+
+        z = random.normal(shape=[self.dataset_num, self.z_dim])
+        fake_64, fake_128, fake_256 = \
+            self.generator([z, sent_emb, word_emb, mask], training=False)
+
+        for i in range(self.dataset_num):
+            valid_path = os.path.join(self.valid_dir, f'validation_{i+1}.jpg')
+            valid_image = np.expand_dims(fake_256[i], axis=0)
+
+            save_images(valid_image, [1, 1], valid_path)
